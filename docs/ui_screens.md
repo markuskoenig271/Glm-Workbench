@@ -1,17 +1,18 @@
 # GLM Workbench – UI Screen Definitions
 
-**Version 1 scope:** the Chapter 27 car-insurance frequency example — see
-[car-insurance.md](car-insurance.md). Seven screens; severity, pure premium, and
-reporting screens arrive with later versions (roadmap at the bottom).
+**Version 1 scope:** the Chapter 27 car-insurance frequency workflow — see
+[car-insurance.md](car-insurance.md) — on the **real freMTPL2 dataset** (the
+synthetic Chapter 27 dataset is backlogged). Seven screens; severity, pure
+premium, and reporting screens arrive with later versions (roadmap at the bottom).
 
 ## 1. Home
-- Choose a built-in dataset: **Chapter 27 synthetic** (educational, ~20k) or
-  **freMTPL2** (real French motor TPL, 678k policies)
+- Load the built-in dataset: **freMTPL2** (real French motor TPL, 678k policies);
+  the Chapter 27 synthetic dataset joins later from the backlog
 - Workflow status
 - Project summary + version roadmap
 
 ## 2. Data Import
-- Built-in datasets (Chapter 27 synthetic / freMTPL2) or file upload (CSV)
+- Built-in dataset (freMTPL2) or file upload (CSV)
 - Preview
 - Dataset spec: target, offset, predictors — preset for built-ins, produced by
   column mapping for CSV uploads
@@ -37,15 +38,15 @@ reporting screens arrive with later versions (roadmap at the bottom).
 - Fit model
 - Coefficient table with p-values, deviance, AIC
 - Educational aids: risk relativities (`exp(beta)`), plain-language coefficient
-  explanations, highlighting of insignificant variables (Dummy1/Dummy2 should
-  surface here)
+  explanations, highlighting of insignificant variables
 
 ## 6. Diagnostics
 - Coefficient estimates with confidence intervals
 - Deviance and Pearson residual plots
 - Observed vs Predicted
 - Model summary
-- Comparison of estimated coefficients with the hidden data-generating model
+- (Backlog, with the synthetic dataset) comparison of estimated coefficients
+  with the hidden data-generating model
 
 ## 7. Prediction
 - Single policy expected claim frequency
@@ -57,7 +58,9 @@ reporting screens arrive with later versions (roadmap at the bottom).
 ## Future screens (roadmap, per car-insurance.md)
 
 - **V2 — Severity Model:** distribution selection (Gamma / Inverse Gaussian),
-  formula editor, fit, diagnostics
+  formula editor, fit, diagnostics (freMTPL2sev is already downloaded)
 - **V3 — Pure Premium:** frequency × severity, variable contributions
 - **V4 — Generic workbench:** arbitrary portfolios; Reports screen
   (HTML/PDF export, model summary)
+- **Backlog:** Chapter 27 synthetic dataset + hidden-DGM educational features
+  (true-model comparison, Dummy1/Dummy2 insignificance demo)

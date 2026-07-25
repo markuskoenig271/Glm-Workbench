@@ -50,8 +50,18 @@ predictors per dataset) instead of hardcoded Chapter 27 columns — architecture
 constants + loader stubs in `pricing_engine/data.py`. Suite 8/8, ruff/mypy clean.
 `docs/car-insurance.md` (Markus' book spec) deliberately untouched.
 
+## Synthetic generator backlogged (Markus' call, end of session)
+
+freMTPL2 is now the V1 primary dataset; the Chapter 27 generator + the
+educational features needing its hidden DGM (`compare_with_true_model`,
+Dummy1/Dummy2 demo) moved to the TODO Backlog. Docs synced on Markus'
+instruction: architecture.md (Datasets reordered, backlog markers),
+ui_screens.md (Home/Import freMTPL2-only, backlog markers, roadmap), and
+car-insurance.md got an implementation-status note at the top — its book-spec
+body deliberately unchanged.
+
 ## Next steps
 
 1. First implementation slice per TODO: dataset spec/registry, then freMTPL2
-   loaders + Chapter 27 generator (TDD-first), then Data Import
+   loaders (TDD-first), then Data Import
 2. Open decision: SQLite storage scope (TODO.md)

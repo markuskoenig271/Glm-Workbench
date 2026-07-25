@@ -1,5 +1,14 @@
 # Car Insurance Example (Chapter 27)
 
+> **Implementation status (2026-07-25):** V1 implements this chapter's *workflow*
+> (explore → select variables → Poisson GLM with exposure offset → diagnostics →
+> prediction) on the **real freMTPL2 dataset** instead of the synthetic portfolio
+> described below (decision 6 in `.planning/PROJECT.md`). The synthetic dataset —
+> and the educational features that need its hidden data-generating model
+> (estimated-vs-true coefficient comparison, Dummy1/Dummy2 insignificance demo) —
+> are backlogged and will join later as a second built-in dataset. The document
+> body below is the original book-example spec, kept unchanged as reference.
+
 ## Purpose
 
 The first version of the GLM Workbench reproduces the practical motor insurance

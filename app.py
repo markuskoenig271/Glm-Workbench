@@ -24,8 +24,8 @@ st.markdown(
 
 st.subheader("Workflow status")
 st.info(
-    "No dataset loaded yet. The synthetic Chapter 27 dataset (~20,000 policies) "
-    "and project persistence are TODO."
+    "No dataset loaded yet. Loading the freMTPL2 dataset (678k real French motor "
+    "TPL policies) and project persistence are TODO."
 )
 
 st.subheader("Roadmap")

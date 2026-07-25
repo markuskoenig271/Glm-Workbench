@@ -9,10 +9,12 @@ models, and predicting pure premiums.
 > **Reference:** See [UI Screen Definitions](ui_screens.md).
 > **Reference:** See [Car Insurance](car-insurance.md).
 
-**Version 1 scope:** reproduce the Chapter 27 motor-insurance **frequency** example from
-*Pricing in General Insurance* (Parodi) — see [car-insurance.md](car-insurance.md).
-Severity, pure premium, and reporting stay in the architecture as later versions
-(roadmap below); the V1 UI exposes only the frequency workflow.
+**Version 1 scope:** the Chapter 27 motor-insurance **frequency** workflow from
+*Pricing in General Insurance* (Parodi) — see [car-insurance.md](car-insurance.md) —
+executed on the **real freMTPL2 dataset** (the synthetic Chapter 27 dataset and its
+hidden-DGM educational features are backlogged; see Datasets below). Severity, pure
+premium, and reporting stay in the architecture as later versions (roadmap below);
+the V1 UI exposes only the frequency workflow.
 
 ## Goals
 
@@ -39,7 +41,7 @@ Streamlit UI (V1 pages)
     (V2+: Severity Model, Pure Premium, Reports)
 
 pricing_engine/
-    data.py            # import, validation, Chapter 27 synthetic dataset
+    data.py            # import, validation, freMTPL2 loaders, dataset spec
     preprocessing.py
     glm.py             # frequency (V1) + severity (V2) fitting
     prediction.py      # frequency prediction (V1), pure premium (V3)
@@ -69,12 +71,9 @@ Glm-Workbench/
 
 ## Datasets
 
-Two built-in datasets, plus CSV upload:
+Primary built-in dataset plus CSV upload; the synthetic dataset is backlogged:
 
-1. **Chapter 27 synthetic** (~20k policies, generated) — the didactic V1 dataset;
-   the hidden data-generating model is kept alongside for the educational
-   estimated-vs-true coefficient comparison. See [car-insurance.md](car-insurance.md).
-2. **freMTPL2** (real French motor TPL data, licence CC0) — the "real world" dataset:
+1. **freMTPL2** (real French motor TPL data, licence CC0) — the **primary V1 dataset**:
    - `freMTPL2freq`: 678,013 policies — `ClaimNb` (target), `Exposure` (offset),
      predictors `Area`, `VehPower`, `VehAge`, `DrivAge`, `BonusMalus`, `VehBrand`,
      `VehGas`, `Density`, `Region`. Used in V1 (frequency).
@@ -83,6 +82,11 @@ Two built-in datasets, plus CSV upload:
    - Stored as Parquet in `data/raw/` (gitignored). Reproducible download from
      OpenML: `https://data.openml.org/datasets/0004/41214/dataset_41214.pq` (freq)
      and `.../0004/41215/dataset_41215.pq` (sev).
+2. **Chapter 27 synthetic** (~20k policies, generated) — **backlogged** (2026-07-25).
+   Joins later as a second registered dataset, bringing the educational features
+   that need its hidden data-generating model (estimated-vs-true coefficient
+   comparison, Dummy1/Dummy2 insignificance demo). See
+   [car-insurance.md](car-insurance.md).
 
 **Design consequence — generic dataset spec:** freMTPL2 does not map 1:1 onto the
 Chapter 27 columns (Area is a density band, not urban/rural; BonusMalus ≠
@@ -104,9 +108,9 @@ no naive per-row rendering.
 - Validation
 - Data typing
 - Exposure checks
-- Synthetic Chapter 27 dataset generator (~20k policies, hidden data-generating
-  model kept alongside for the educational coefficient comparison)
 - freMTPL2 Parquet loaders (pyarrow)
+- (Backlog) Synthetic Chapter 27 dataset generator (~20k policies, hidden
+  data-generating model kept alongside for the educational coefficient comparison)
 
 ### Feature Engineering
 - Encoding
@@ -124,7 +128,8 @@ no naive per-row rendering.
 - Residuals (deviance, Pearson)
 - Calibration / observed vs predicted
 - AIC/BIC, deviance
-- Comparison with the hidden data-generating model (educational)
+- (Backlog, with the synthetic dataset) comparison with the hidden
+  data-generating model
 
 ### Reporting (V4)
 - HTML

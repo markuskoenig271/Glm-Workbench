@@ -4,7 +4,7 @@ import streamlit as st
 
 st.title("Data Import")
 st.info(
-    "Not yet implemented. Planned: load the synthetic Chapter 27 dataset (~20k policies) "
-    "or upload a CSV, preview, column mapping (target Claims, offset Exposure), "
+    "Not yet implemented. Planned: load the freMTPL2 dataset (678k policies) or upload "
+    "a CSV, preview, dataset spec (target/offset/predictors) via column mapping, "
     "validation report."
 )

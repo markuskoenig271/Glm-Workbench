@@ -15,22 +15,23 @@ educational tool, before growing into a generic pricing platform
 
 ## How it works
 
-A Streamlit app walks the user through the Chapter 27 frequency workflow: load the
-synthetic portfolio (~20,000 policies; target `Claims`, offset `Exposure`, eight
-predictors — two of them intentionally non-significant), explore it, engineer
-features, fit a Poisson GLM (log link, exposure offset), inspect coefficients and
-diagnostics, and predict expected claim frequency per policy. Educational aids
-throughout: `exp(beta)` risk relativities, plain-language coefficient explanations,
-highlighting of insignificant variables, and comparison of estimated coefficients
-against the hidden data-generating model. All computation runs in the
-`pricing_engine/` Python package; Streamlit is only the front-end.
+A Streamlit app walks the user through the Chapter 27 frequency workflow on the
+real freMTPL2 portfolio (678k French motor TPL policies; target `ClaimNb`, offset
+`Exposure`, nine rating factors): explore it, engineer features, fit a Poisson GLM
+(log link, exposure offset), inspect coefficients and diagnostics, and predict
+expected claim frequency per policy. Educational aids throughout: `exp(beta)` risk
+relativities, plain-language coefficient explanations, highlighting of
+insignificant variables. (The synthetic Chapter 27 dataset and its hidden-DGM
+comparison are backlogged.) All computation runs in the `pricing_engine/` Python
+package; Streamlit is only the front-end.
 
 ## Scope
 
 **In scope (V1 — frequency only, per `docs/car-insurance.md`)**
-- Synthetic Chapter 27 dataset (generator with hidden data-generating model) + CSV import
-- freMTPL2 real dataset (French motor TPL, 678k policies) as the "real world"
-  companion — frequency in V1; its severity table unlocks V2/V3
+- freMTPL2 real dataset (French motor TPL, 678k policies) as the primary dataset —
+  frequency in V1; its severity table unlocks V2/V3. CSV import alongside.
+- (Backlogged) synthetic Chapter 27 dataset (generator with hidden
+  data-generating model + estimated-vs-true comparison)
 - Data validation, profiling, one-way frequency analysis
 - Feature engineering: binning, encoding, offset selection
 - Frequency GLM: Poisson, log link, exposure offset
