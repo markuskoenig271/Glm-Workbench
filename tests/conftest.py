@@ -17,6 +17,27 @@ def tmp_db(tmp_path: Path) -> Iterator[sqlite3.Connection]:
 
 
 @pytest.fixture
+def fremtpl2_sample() -> pd.DataFrame:
+    """A tiny frame in the freMTPL2freq schema (native column names, all 12 columns)."""
+    return pd.DataFrame(
+        {
+            "IDpol": [1, 3, 5, 10],
+            "ClaimNb": [1, 0, 2, 0],
+            "Exposure": [0.10, 0.77, 0.75, 1.0],
+            "Area": ["D", "D", "B", "A"],
+            "VehPower": [5, 5, 6, 7],
+            "VehAge": [0, 2, 2, 12],
+            "DrivAge": [55, 55, 52, 30],
+            "BonusMalus": [50, 50, 50, 68],
+            "VehBrand": ["B12", "B12", "B12", "B3"],
+            "VehGas": ["Regular", "Regular", "Diesel", "Petrol"],
+            "Density": [1217.0, 1217.0, 54.0, 3000.0],
+            "Region": ["R82", "R82", "R22", "R11"],
+        }
+    )
+
+
+@pytest.fixture
 def sample_portfolio() -> pd.DataFrame:
     """A tiny portfolio in the Chapter 27 schema (docs/car-insurance.md)."""
     return pd.DataFrame(

@@ -1,13 +1,18 @@
-"""Data layer: portfolio import, validation, and the synthetic Chapter 27 dataset.
+"""Data layer: dataset specs, built-in dataset registry, loaders, validation.
 
-Dataset schema per docs/car-insurance.md (Parodi, Chapter 27): ~20,000 policies,
-claim counts as target, exposure as offset, and eight predictors — two of which
-(Dummy1, Dummy2) are intentionally unrelated to the response.
+Every dataset is described by a DatasetSpec (target, offset, predictors) so pages
+and the engine never hardcode column names — see docs/architecture.md "Datasets".
+The primary V1 dataset is freMTPL2 (real French motor TPL, CC0); the synthetic
+Chapter 27 dataset (docs/car-insurance.md) is backlogged.
 """
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
+
+# --- Chapter 27 synthetic dataset (backlogged generator) --------------------
 
 TARGET_COLUMN = "Claims"
 OFFSET_COLUMN = "Exposure"
@@ -27,11 +32,14 @@ REQUIRED_COLUMNS = [TARGET_COLUMN, OFFSET_COLUMN]
 
 DEFAULT_N_POLICIES = 20_000
 
-# freMTPL2: real French motor TPL data (CC0, OpenML 41214/41215), Parquet files
-# in data/raw/ — see docs/architecture.md "Datasets". Native column names are
-# kept; the dataset spec (target/offset/predictors) absorbs the difference.
+# --- freMTPL2: real French motor TPL data (CC0, OpenML 41214/41215) ---------
+# Parquet files in data/raw/ — see docs/architecture.md "Datasets". Native
+# column names are kept; the DatasetSpec absorbs the difference.
+
 FREMTPL2_FREQ_PATH = Path("data/raw/freMTPL2freq.parquet")
 FREMTPL2_SEV_PATH = Path("data/raw/freMTPL2sev.parquet")
+FREMTPL2_FREQ_URL = "https://data.openml.org/datasets/0004/41214/dataset_41214.pq"
+FREMTPL2_SEV_URL = "https://data.openml.org/datasets/0004/41215/dataset_41215.pq"
 FREMTPL2_TARGET_COLUMN = "ClaimNb"
 FREMTPL2_OFFSET_COLUMN = "Exposure"
 FREMTPL2_PREDICTOR_COLUMNS = [
@@ -46,21 +54,144 @@ FREMTPL2_PREDICTOR_COLUMNS = [
     "Region",
 ]
 
+# --- Dataset spec + registry ------------------------------------------------
 
-def load_fremtpl2_freq(path: str | Path = FREMTPL2_FREQ_PATH) -> pd.DataFrame:
+
+@dataclass(frozen=True)
+class DatasetSpec:
+    """Generic description of a modelling dataset: what to predict, with what."""
+
+    name: str
+    label: str
+    target: str
+    offset: str | None
+    predictors: tuple[str, ...]
+
+    @property
+    def required_columns(self) -> tuple[str, ...]:
+        cols = [self.target]
+        if self.offset is not None:
+            cols.append(self.offset)
+        cols.extend(self.predictors)
+        return tuple(cols)
+
+
+FREMTPL2_FREQ_SPEC = DatasetSpec(
+    name="fremtpl2_freq",
+    label="freMTPL2 — French motor TPL, frequency (678k policies)",
+    target=FREMTPL2_TARGET_COLUMN,
+    offset=FREMTPL2_OFFSET_COLUMN,
+    predictors=tuple(FREMTPL2_PREDICTOR_COLUMNS),
+)
+
+DATASET_REGISTRY: dict[str, DatasetSpec] = {
+    FREMTPL2_FREQ_SPEC.name: FREMTPL2_FREQ_SPEC,
+}
+
+
+def list_datasets() -> list[DatasetSpec]:
+    """Specs of all built-in datasets, in registry order."""
+    return list(DATASET_REGISTRY.values())
+
+
+def load_dataset(name: str) -> tuple[pd.DataFrame, DatasetSpec]:
+    """Load a built-in dataset by registry name; returns (data, spec)."""
+    if name not in DATASET_REGISTRY:
+        available = ", ".join(DATASET_REGISTRY)
+        raise KeyError(f"Unknown dataset {name!r} — available: {available}")
+    return _LOADERS[name](), DATASET_REGISTRY[name]
+
+
+# --- Loaders ----------------------------------------------------------------
+
+
+def _read_openml_parquet(path: str | Path, what: str, url: str) -> pd.DataFrame:
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{what} not found at '{path}'. Download it once with:\n"
+            f"  curl -sL -o {path.as_posix()} {url}\n"
+            f"(see README 'Datasets')."
+        )
+    df = pd.read_parquet(path)
+    df["IDpol"] = df["IDpol"].astype("int64")
+    return df
+
+
+def load_fremtpl2_freq(path: str | Path | None = None) -> pd.DataFrame:
     """Load the freMTPL2 frequency table (678k policies)."""
-    raise NotImplementedError
+    return _read_openml_parquet(
+        path if path is not None else FREMTPL2_FREQ_PATH,
+        "freMTPL2 frequency data",
+        FREMTPL2_FREQ_URL,
+    )
 
 
-def load_fremtpl2_sev(path: str | Path = FREMTPL2_SEV_PATH) -> pd.DataFrame:
+def load_fremtpl2_sev(path: str | Path | None = None) -> pd.DataFrame:
     """Load the freMTPL2 severity table (26.6k claim amounts; V2)."""
-    raise NotImplementedError
+    return _read_openml_parquet(
+        path if path is not None else FREMTPL2_SEV_PATH,
+        "freMTPL2 severity data",
+        FREMTPL2_SEV_URL,
+    )
+
+
+_LOADERS: dict[str, Callable[[], pd.DataFrame]] = {
+    "fremtpl2_freq": load_fremtpl2_freq,
+}
+
+# --- Validation -------------------------------------------------------------
+
+
+def validate_portfolio(df: pd.DataFrame, spec: DatasetSpec) -> list[str]:
+    """Validate a portfolio against a dataset spec.
+
+    Returns human-readable findings; an empty list means the portfolio is usable
+    for frequency modelling.
+    """
+    findings: list[str] = []
+
+    present = [c for c in spec.required_columns if c in df.columns]
+    findings.extend(
+        f"Missing required column '{c}'" for c in spec.required_columns if c not in df.columns
+    )
+
+    if spec.target in df.columns:
+        target = df[spec.target]
+        if not pd.api.types.is_numeric_dtype(target):
+            findings.append(f"Target '{spec.target}' must be numeric (claim counts)")
+        else:
+            negative = int((target < 0).sum())
+            if negative:
+                findings.append(f"Target '{spec.target}' has {negative} negative value(s)")
+
+    if spec.offset is not None and spec.offset in df.columns:
+        offset = df[spec.offset]
+        if not pd.api.types.is_numeric_dtype(offset):
+            findings.append(f"Offset '{spec.offset}' must be numeric (exposure)")
+        else:
+            non_positive = int((offset <= 0).sum())
+            if non_positive:
+                findings.append(
+                    f"Offset '{spec.offset}' has {non_positive} non-positive value(s) — "
+                    "exposure must be positive"
+                )
+
+    for column in present:
+        missing = int(df[column].isna().sum())
+        if missing:
+            findings.append(f"Column '{column}' has {missing} missing value(s)")
+
+    return findings
+
+
+# --- Stubs for later slices -------------------------------------------------
 
 
 def generate_chapter27_portfolio(
     n_policies: int = DEFAULT_N_POLICIES, seed: int = 27
 ) -> tuple[pd.DataFrame, dict[str, float]]:
-    """Generate the synthetic Chapter 27 portfolio.
+    """Generate the synthetic Chapter 27 portfolio (BACKLOGGED — see TODO.md).
 
     Returns the portfolio and the hidden data-generating coefficients, kept for
     the educational estimated-vs-true comparison on the Diagnostics screen.
@@ -69,10 +200,5 @@ def generate_chapter27_portfolio(
 
 
 def load_portfolio(path: str | Path) -> pd.DataFrame:
-    """Load a portfolio CSV into a DataFrame."""
-    raise NotImplementedError
-
-
-def validate_portfolio(df: pd.DataFrame) -> list[str]:
-    """Validate a portfolio; return a list of human-readable findings (empty = valid)."""
+    """Load a portfolio CSV into a DataFrame (Data Import slice)."""
     raise NotImplementedError

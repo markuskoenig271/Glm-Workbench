@@ -69,12 +69,6 @@ def test_stubs_fail_loudly(sample_portfolio: pd.DataFrame) -> None:
     with pytest.raises(NotImplementedError):
         data.load_portfolio("portfolio.csv")
     with pytest.raises(NotImplementedError):
-        data.load_fremtpl2_freq()
-    with pytest.raises(NotImplementedError):
-        data.load_fremtpl2_sev()
-    with pytest.raises(NotImplementedError):
-        data.validate_portfolio(sample_portfolio)
-    with pytest.raises(NotImplementedError):
         preprocessing.bin_numeric(sample_portfolio, "Age", bins=3)
     with pytest.raises(NotImplementedError):
         preprocessing.encode_categorical(sample_portfolio, ["Region"])

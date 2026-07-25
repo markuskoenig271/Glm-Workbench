@@ -60,8 +60,21 @@ ui_screens.md (Home/Import freMTPL2-only, backlog markers, roadmap), and
 car-insurance.md got an implementation-status note at the top — its book-spec
 body deliberately unchanged.
 
+## First implementation slice DONE: dataset spec + loaders (same session)
+
+`pricing_engine/data.py` now real (first non-stub code): `DatasetSpec` frozen
+dataclass, `DATASET_REGISTRY`/`list_datasets`/`load_dataset` (returns (df, spec)),
+`load_fremtpl2_freq`/`_sev`, `validate_portfolio(df, spec)`. TDD: red (17 fail) →
+green; suite 26 passed, coverage 99%, ruff/mypy clean. Change Validation Workflow
+followed: BA/Test agent wrote `.planning/e2e-tests/dataset-spec-loaders.md`
+(8 TCs), all executed against the real data — 8/8 PASS, load+validate 678k rows
+in 0.04s. Two E2E-doc adjustments recorded in its Results section (tuple return
+API; uint8 casts in the broken-portfolio TC). No architecture drift — code matches
+the "Datasets" section.
+
 ## Next steps
 
-1. First implementation slice per TODO: dataset spec/registry, then freMTPL2
-   loaders (TDD-first), then Data Import
+1. Data Import slice: `load_portfolio` (CSV) TDD-first, then
+   `pages/01_Data_Import.py` (registry-driven dataset choice, preview,
+   validation report)
 2. Open decision: SQLite storage scope (TODO.md)

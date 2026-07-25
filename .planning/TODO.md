@@ -9,15 +9,19 @@ Active work items and technical debt. Check this at the start of every session.
 Primary V1 dataset is now **freMTPL2** (real data, decision 6); the synthetic
 Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
 
-- [ ] **Dataset spec + registry** — generic (target, offset, predictors) description
-  per dataset (decision 6); built-in: freMTPL2 (chapter27 synthetic joins later
-  from the backlog); CSV upload produces a spec via column mapping. Foundation
-  for all pages.
-- [ ] **freMTPL2 loaders** — `load_fremtpl2_freq`/`load_fremtpl2_sev` TDD-first
-  (Parquet via pyarrow; data downloaded 2026-07-25 to `data/raw/`, download
-  commands in README); friendly error when files are missing
-- [ ] **Data Import slice** — `load_portfolio` + `validate_portfolio` TDD-first,
-  then `pages/01_Data_Import.py` (dataset choice, preview, validation report)
+- [x] **Dataset spec + registry — DONE 2026-07-25.** `DatasetSpec` frozen dataclass
+  (name/label/target/offset/predictors, `required_columns`), `DATASET_REGISTRY`
+  (fremtpl2_freq), `list_datasets()`, `load_dataset()` in `pricing_engine/data.py`.
+- [x] **freMTPL2 loaders — DONE 2026-07-25.** `load_fremtpl2_freq`/`_sev` (Parquet,
+  IDpol→int64, module-level default paths so tests can monkeypatch); missing file
+  → FileNotFoundError with the curl command. **`validate_portfolio(df, spec)`
+  implemented too** (missing columns, non-numeric/negative target, non-positive
+  offset, NaN counts). TDD: 18 new unit tests (suite 26); E2E 8/8 PASSED against
+  real data (`.planning/e2e-tests/dataset-spec-loaders.md` — load+validate 678k
+  rows in 0.04s).
+- [ ] **Data Import slice** — `load_portfolio` (CSV) TDD-first, then
+  `pages/01_Data_Import.py` (dataset choice via registry, preview, validation
+  report rendering `validate_portfolio` findings)
 - [ ] **Data Exploration slice** — summary stats, histograms, one-way claim
   frequency by predictor; aggregate/sample for 678k rows (no raw-row rendering)
 - [ ] **Feature Engineering slice** — binning (DrivAge, VehAge), encoding, offset
