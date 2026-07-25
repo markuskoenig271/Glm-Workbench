@@ -39,6 +39,9 @@ premium, and reporting screens arrive with later versions (roadmap at the bottom
 - Coefficient table with p-values, deviance, AIC
 - Educational aids: risk relativities (`exp(beta)`), plain-language coefficient
   explanations, highlighting of insignificant variables
+- (Planned, V1.x) Stepwise variable selection section: backward/forward by
+  AIC/BIC, step log, adopt-selected-predictors into the shared spec — no
+  separate screen needed (see TODO.md)
 
 ## 6. Diagnostics
 - Coefficient estimates with confidence intervals

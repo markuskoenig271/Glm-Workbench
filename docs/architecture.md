@@ -131,8 +131,13 @@ no naive per-row rendering.
 
 ### Modeling
 - Frequency GLMs (V1: Poisson, log link, exposure offset)
+- (Planned V1.x) Stepwise variable selection by information criterion —
+  `glm.stepwise_selection` looping the fitter; UI section on the Frequency
+  Model screen; only the adopted final fit enters the run history
 - Severity GLMs (V2)
 - Pure Premium (V3)
+- (Deferred to V4, with ML challengers) regularised fits — trade-off: no
+  classical inference (std errors/p-values/CIs) on penalised estimates
 
 ### Diagnostics
 - Coefficients (estimates, confidence intervals, `exp(beta)` relativities)

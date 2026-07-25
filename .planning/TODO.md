@@ -76,6 +76,24 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   `.planning/e2e-tests/prediction.md`: all executed TCs PASSED (full predict
   2.0s; **in-sample balance exact: expected 36,102 = observed 36,102**).
   **→ V1 workflow complete: all 7 screens functional.**
+
+## V1.x — enhancements (next up)
+
+- [ ] **Stepwise variable selection (Markus' ask, 2026-07-25).** NO new tab —
+  a "Variable selection" section on `pages/04_Frequency_Model.py`:
+  direction (backward first / forward), criterion (AIC default / BIC), "Run
+  selection" button with progress (backward over 9 predictors ≈ 45 fits ≈
+  5–10 min on full data), step-log table (term dropped/added, AIC before/after),
+  "Adopt selected predictors" button writing the result into the shared spec
+  (Feature Engineering multiselect + formula preview follow automatically).
+  Engine: `stepwise_selection(df, spec, family, direction, criterion) ->
+  (selected_predictors, step_log)` in `glm.py`, looping `fit_frequency_glm`.
+  DECIDED: candidate fits are NOT recorded in the SQLite run history (would
+  flood it) — only the final adopted fit. Note for the docs: on 678k rows
+  p-values flag nearly everything significant, so selection is by
+  information criterion, not p-values.
+- [ ] Manual walkthrough by Markus + the deferred/manual TCs from the five
+  E2E docs (selectbox/radio changes, CSV save, F5 history persistence)
 - [x] SQLite scope — DECIDED 2026-07-25 (decision 7 in `PROJECT.md`, storage
   section in `docs/architecture.md`): workbench state + model run history,
   never portfolio data; implemented lazily.
@@ -90,6 +108,13 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   model: `compare_with_true_model` diagnostic, Dummy1/Dummy2 insignificance demo.
   Slots in behind the dataset spec as a second registered dataset (stubs already
   in `pricing_engine/`). Deferred 2026-07-25 in favour of real-data-first.
+- [ ] **Regularisation (lasso/ridge/elastic net)** — defer to the ML-challenger
+  chapter (V4 "XGBoost comparison" territory). statsmodels `fit_regularized`
+  makes it cheap to add as a Frequency Model option (penalty + alpha), BUT
+  penalised fits return no std errors/p-values/CIs → needs a degraded
+  coefficient view instead of the inference table. Record that trade-off in
+  the design when it comes; typical actuarial practice keeps pricing GLMs
+  unpenalised for interpretability.
 - [ ] V2+ roadmap items (severity, pure premium, generic workbench, reports) —
   tracked in `PROJECT.md` / `docs/architecture.md`
 
