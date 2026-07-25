@@ -219,3 +219,11 @@ __marimo__/
 
 # Superseded planning-state snapshots (see CLAUDE.md "Documentation Paths")
 .planning/archive/
+
+# Local working outputs (keep the dirs, ignore their contents)
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+reports/*
+!reports/.gitkeep

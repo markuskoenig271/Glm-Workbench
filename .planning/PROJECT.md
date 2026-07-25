@@ -8,50 +8,53 @@ For current progress see `STATE.md`; for open work see `TODO.md`.
 ## Purpose
 
 A local workbench to test out and learn Generalized Linear Models for actuarial
-pricing: import insurance portfolio data, fit frequency and severity GLMs, compute
-pure premiums, and inspect diagnostics — all through a guided UI.
+pricing. **Version 1 reproduces the practical motor-insurance frequency modelling
+example from Chapter 27 of *Pricing in General Insurance* (Pietro Parodi)** as an
+educational tool, before growing into a generic pricing platform
+(see `docs/car-insurance.md`).
 
 ## How it works
 
-A Streamlit app walks the user through the classic actuarial pricing workflow:
-data goes in as a portfolio file (policies with exposure, claim counts, claim
-amounts), gets profiled and feature-engineered, then a frequency GLM
-(Poisson / Negative Binomial, exposure as offset) and a severity GLM
-(Gamma / Inverse Gaussian) are fitted. Pure premium = predicted frequency ×
-predicted severity. Diagnostics (coefficients, residuals, AIC/BIC, calibration)
-support model comparison; results export as HTML/PDF/CSV reports. All computation
-runs in the `pricing_engine/` Python package; Streamlit is only the front-end.
+A Streamlit app walks the user through the Chapter 27 frequency workflow: load the
+synthetic portfolio (~20,000 policies; target `Claims`, offset `Exposure`, eight
+predictors — two of them intentionally non-significant), explore it, engineer
+features, fit a Poisson GLM (log link, exposure offset), inspect coefficients and
+diagnostics, and predict expected claim frequency per policy. Educational aids
+throughout: `exp(beta)` risk relativities, plain-language coefficient explanations,
+highlighting of insignificant variables, and comparison of estimated coefficients
+against the hidden data-generating model. All computation runs in the
+`pricing_engine/` Python package; Streamlit is only the front-end.
 
 ## Scope
 
-**In scope**
-- Portfolio data import, validation, profiling
-- Feature engineering: binning, encoding, transforms, interactions, offsets
-- Frequency + severity GLMs, pure premium calculation
-- Diagnostics (coefficients, residuals, QQ, calibration, AIC/BIC, observed vs predicted)
-- Single-policy and batch prediction, CSV export
-- HTML/PDF report export
+**In scope (V1 — frequency only, per `docs/car-insurance.md`)**
+- Synthetic Chapter 27 dataset (generator with hidden data-generating model) + CSV import
+- Data validation, profiling, one-way frequency analysis
+- Feature engineering: binning, encoding, offset selection
+- Frequency GLM: Poisson, log link, exposure offset
+- Diagnostics: coefficients + CIs, deviance/Pearson residuals, observed vs
+  predicted, AIC/deviance, estimated-vs-true comparison
+- Single-policy and batch frequency prediction, CSV export
 - Local single-user operation (SQLite storage)
 
-**Out of scope (for now — see "Future Ideas" in `docs/architecture.md`)**
-- ML challenger models (XGBoost), SHAP explainability
-- Cross-validation, experiment tracking
-- Multi-user / hosted deployment
+**Later versions (roadmap)**
+- V2 — Severity GLM (Gamma / Inverse Gaussian)
+- V3 — Pure Premium (frequency × severity), variable contributions
+- V4 — Generic pricing workbench for arbitrary portfolios; reports (HTML/PDF)
+- Negative Binomial frequency, variable selection, cross-validation
+- ML challengers (XGBoost), SHAP (see "Future Ideas" in `docs/architecture.md`)
 
 ## Workflow steps (UI tabs)
 
-Per `docs/ui_screens.md` — one Streamlit page per step:
+Per `docs/ui_screens.md` — one Streamlit page per step (V1):
 
-1. **Home** — load project / sample data, workflow status
-2. **Data Import** — upload, preview, column mapping, validation report
-3. **Data Exploration** — summary stats, histograms, missing values, correlations
-4. **Feature Engineering** — selection, binning, encoding, transforms, interactions
-5. **Frequency Model** — distribution, formula, offset, fit, coefficients, residuals
-6. **Severity Model** — distribution, formula, fit, diagnostics
-7. **Pure Premium** — frequency × severity, variable contributions
-8. **Diagnostics** — AIC/BIC, QQ, residuals, observed vs predicted
-9. **Prediction** — single policy + batch, CSV export
-10. **Reports** — HTML/PDF export, model summary
+1. **Home** — load sample data, workflow status, roadmap
+2. **Data Import** — sample dataset or CSV upload, preview, column mapping, validation
+3. **Data Exploration** — summary stats, histograms, one-way frequencies, correlations
+4. **Feature Engineering** — variable selection, binning, encoding, offset
+5. **Frequency Model** — Poisson fit, coefficient table, educational aids
+6. **Diagnostics** — CIs, residuals, observed vs predicted, true-model comparison
+7. **Prediction** — single policy + batch expected frequency, CSV export
 
 ## Tech stack
 
@@ -65,7 +68,13 @@ for all computation. Details: `docs/architecture.md`.
 - **Decision 2 — SQLite for storage:** local single-user persistence, no server.
 - **Decision 3 — computation lives in `pricing_engine/`, not in pages:** keeps the
   model code importable and testable without Streamlit (TDD requirement).
-- (Open) GLM library choice — statsmodels is the candidate; decide at scaffold time.
+- **Decision 4 — statsmodels as the GLM library (2026-07-25):** first-class GLM
+  families (Poisson, NegBin, Gamma, Inverse Gaussian), R-style formulas, and the
+  inference output actuaries expect (std errors, p-values, AIC/BIC) — a natural fit
+  for a learning tool, over scikit-learn's prediction-oriented API.
+- **Decision 5 — V1 follows the book (2026-07-25):** reproduce Parodi Chapter 27
+  frequency-only before generalizing; versioned roadmap V1 frequency → V2 severity →
+  V3 pure premium → V4 generic workbench (`docs/car-insurance.md`).
 
 ## Working conventions
 

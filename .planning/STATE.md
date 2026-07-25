@@ -5,25 +5,41 @@ Read this + `TODO.md` at the start of every session. See `PROJECT.md` for the sp
 
 ---
 
-## Last updated: 2026-07-25 (session 1 — repo bootstrap, spec-only)
+## Last updated: 2026-07-25 (session 1 — bootstrap, scaffold, V1 rescope)
 
 ## Headline
 
-Brand-new repo, **spec-only state** — no code yet. This session cleaned the bootstrap
-files: the planning files (`STATE`/`TODO`) had been copied from another project
-(Lex-VIA/Decision-Parsing) and were reset; CLAUDE.md was purged of leftovers from that
-project; `PROJECT.md` was filled from `docs/architecture.md` + `docs/ui_screens.md`.
-Policy change (Markus): private single-committer project — state file is plain
-`STATE.md` and committed (only `.planning/archive/` stays gitignored).
+Repo went from empty to a verified running scaffold, then **rescoped to V1 =
+Chapter 27 frequency-only** after Markus added `docs/car-insurance.md` (Parodi,
+*Pricing in General Insurance*): the app reproduces the book's motor frequency
+example before generalizing (roadmap V1 frequency → V2 severity → V3 pure
+premium → V4 generic).
 
-## What exists
+Earlier in the session: bootstrap cleanup (planning files had been copied from
+another project and were reset; CLAUDE.md purged; plain committed `STATE.md`
+policy) — pushed as `2b306ca`. Scaffold + rescope are NOT yet committed.
 
-- `docs/architecture.md` — Streamlit app + `pricing_engine/` package design
-- `docs/ui_screens.md` — 10 UI screens (Home → Reports)
-- `.planning/PROJECT.md` — spec filled from the docs
-- No `pyproject.toml`, no source, no tests
+## What the rescope changed
+
+- `docs/ui_screens.md` rewritten: 7 V1 screens, V2+ screens moved to a roadmap
+  section; `docs/architecture.md` updated (V1 markers, roadmap, Chapter 27
+  generator in the data layer) + repo-layout drift fixed
+- `pages/`: now 01–06 (Data Import, Exploration, Feature Engineering, Frequency
+  Model, Diagnostics, Prediction); Severity/Pure Premium/Reports pages deleted
+- `pricing_engine/data.py`: Chapter 27 schema constants (target `Claims`, offset
+  `Exposure`, 8 predictors incl. no-effect Dummy1/Dummy2) +
+  `generate_chapter27_portfolio` stub returning (portfolio, hidden true coefficients)
+- `prediction.py` gained `predict_frequency` (V1); `diagnostics.py` gained
+  `residuals` + `compare_with_true_model`; PROJECT.md decision 5 recorded
+
+## Verified (after rescope)
+
+- `uv run pytest`: 7/7 passed, coverage gate green; ruff + format + mypy clean
+- E2E smoke re-passed: HTTP 200, clean log, exactly the 6 V1 pages
+  (`.planning/e2e-tests/scaffold-smoke.md`)
 
 ## Next steps
 
-Scaffold the project (see TODO.md "Project setup"). Architecture-first rule is already
-satisfied for the initial build — the design in `docs/` is the approved baseline.
+1. First implementation slice per TODO: the Chapter 27 dataset generator
+   (TDD-first), then Data Import
+2. Open decision: SQLite storage scope (TODO.md)

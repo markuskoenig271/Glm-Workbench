@@ -5,7 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 GLM Workbench — a local tool to test out and learn Generalized Linear Models for
-actuarial pricing (frequency/severity modeling, pure premium). Spec lives in
+actuarial pricing. **V1 reproduces the Chapter 27 car-insurance frequency example**
+from Parodi's *Pricing in General Insurance* (`docs/car-insurance.md`); severity,
+pure premium, and a generic workbench follow as V2–V4. Spec lives in
 `.planning/PROJECT.md`; design in `docs/architecture.md` + `docs/ui_screens.md`.
 
 ## Tech Stack
@@ -17,16 +19,19 @@ actuarial pricing (frequency/severity modeling, pure premium). Spec lives in
 
 ### Quick Start
 
-(Todo — no code yet; fill in once the scaffold exists. Expected: `uv run streamlit run app.py`)
+```bash
+uv sync                            # install dependencies
+uv run streamlit run app.py        # launch the app
+```
 
 ```bash
-# Tests
+# Tests (coverage gate: 75%)
 uv run pytest
 
 # Lint & type check
-uv run ruff check src/ tests/
-uv run ruff format --check src/ tests/
-uv run mypy src/
+uv run ruff check pricing_engine/ tests/ app.py pages/
+uv run ruff format --check pricing_engine/ tests/ app.py pages/
+uv run mypy pricing_engine/ tests/
 
 # Auto-fix lint & formatting
 uv run ruff check . --fix
