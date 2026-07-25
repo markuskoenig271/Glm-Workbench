@@ -27,6 +27,35 @@ REQUIRED_COLUMNS = [TARGET_COLUMN, OFFSET_COLUMN]
 
 DEFAULT_N_POLICIES = 20_000
 
+# freMTPL2: real French motor TPL data (CC0, OpenML 41214/41215), Parquet files
+# in data/raw/ — see docs/architecture.md "Datasets". Native column names are
+# kept; the dataset spec (target/offset/predictors) absorbs the difference.
+FREMTPL2_FREQ_PATH = Path("data/raw/freMTPL2freq.parquet")
+FREMTPL2_SEV_PATH = Path("data/raw/freMTPL2sev.parquet")
+FREMTPL2_TARGET_COLUMN = "ClaimNb"
+FREMTPL2_OFFSET_COLUMN = "Exposure"
+FREMTPL2_PREDICTOR_COLUMNS = [
+    "Area",  # density band A–F
+    "VehPower",
+    "VehAge",
+    "DrivAge",
+    "BonusMalus",
+    "VehBrand",
+    "VehGas",  # Diesel / Regular
+    "Density",
+    "Region",
+]
+
+
+def load_fremtpl2_freq(path: str | Path = FREMTPL2_FREQ_PATH) -> pd.DataFrame:
+    """Load the freMTPL2 frequency table (678k policies)."""
+    raise NotImplementedError
+
+
+def load_fremtpl2_sev(path: str | Path = FREMTPL2_SEV_PATH) -> pd.DataFrame:
+    """Load the freMTPL2 severity table (26.6k claim amounts; V2)."""
+    raise NotImplementedError
+
 
 def generate_chapter27_portfolio(
     n_policies: int = DEFAULT_N_POLICIES, seed: int = 27

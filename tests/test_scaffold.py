@@ -35,6 +35,24 @@ def test_chapter27_schema() -> None:
     assert data.DEFAULT_N_POLICIES == 20_000
 
 
+def test_fremtpl2_schema() -> None:
+    assert data.FREMTPL2_TARGET_COLUMN == "ClaimNb"
+    assert data.FREMTPL2_OFFSET_COLUMN == "Exposure"
+    assert data.FREMTPL2_PREDICTOR_COLUMNS == [
+        "Area",
+        "VehPower",
+        "VehAge",
+        "DrivAge",
+        "BonusMalus",
+        "VehBrand",
+        "VehGas",
+        "Density",
+        "Region",
+    ]
+    assert data.FREMTPL2_FREQ_PATH.name == "freMTPL2freq.parquet"
+    assert data.FREMTPL2_SEV_PATH.name == "freMTPL2sev.parquet"
+
+
 def test_glm_families() -> None:
     assert glm.FREQUENCY_FAMILIES == ["poisson", "negative_binomial"]
     assert glm.SEVERITY_FAMILIES == ["gamma", "inverse_gaussian"]
@@ -50,6 +68,10 @@ def test_stubs_fail_loudly(sample_portfolio: pd.DataFrame) -> None:
         data.generate_chapter27_portfolio()
     with pytest.raises(NotImplementedError):
         data.load_portfolio("portfolio.csv")
+    with pytest.raises(NotImplementedError):
+        data.load_fremtpl2_freq()
+    with pytest.raises(NotImplementedError):
+        data.load_fremtpl2_sev()
     with pytest.raises(NotImplementedError):
         data.validate_portfolio(sample_portfolio)
     with pytest.raises(NotImplementedError):

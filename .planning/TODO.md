@@ -6,6 +6,12 @@ Active work items and technical debt. Check this at the start of every session.
 
 ## V1 — Chapter 27 frequency workbench (docs/car-insurance.md)
 
+- [ ] **Dataset spec + registry** — generic (target, offset, predictors) description
+  per dataset (decision 6); built-ins: chapter27 synthetic + freMTPL2; CSV upload
+  produces a spec via column mapping. Foundation for all pages.
+- [ ] **freMTPL2 loaders** — `load_fremtpl2_freq`/`load_fremtpl2_sev` TDD-first
+  (Parquet via pyarrow; data downloaded 2026-07-25 to `data/raw/`, download
+  commands in README); friendly error when files are missing
 - [ ] **Chapter 27 synthetic dataset generator** — `generate_chapter27_portfolio`
   TDD-first: ~20k policies, hidden data-generating model returned alongside
   (for the Diagnostics estimated-vs-true comparison); Dummy1/Dummy2 with no

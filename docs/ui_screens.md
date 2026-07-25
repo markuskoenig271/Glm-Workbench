@@ -5,28 +5,30 @@
 reporting screens arrive with later versions (roadmap at the bottom).
 
 ## 1. Home
-- Load the synthetic Chapter 27 dataset (sample data)
+- Choose a built-in dataset: **Chapter 27 synthetic** (educational, ~20k) or
+  **freMTPL2** (real French motor TPL, 678k policies)
 - Workflow status
 - Project summary + version roadmap
 
 ## 2. Data Import
-- Load sample dataset (~20,000 policies) or file upload (CSV)
+- Built-in datasets (Chapter 27 synthetic / freMTPL2) or file upload (CSV)
 - Preview
-- Column mapping to the Chapter 27 schema (target `Claims`, offset `Exposure`)
+- Dataset spec: target, offset, predictors — preset for built-ins, produced by
+  column mapping for CSV uploads
 - Validation report (types, missing values, exposure checks)
 
 ## 3. Data Exploration
 - Summary statistics
 - Histograms
-- One-way claim frequency by predictor (Age, LocationType, Region, VehicleAge,
-  FuelType, NoClaimYears, Dummy1, Dummy2)
+- One-way claim frequency by predictor (per the active dataset's spec)
 - Missing values
 - Correlations
+- Large datasets (freMTPL2): aggregate / sample for plots, never render raw rows
 
 ## 4. Feature Engineering
 - Variable selection
-- Binning of continuous predictors (Age, VehicleAge)
-- Encoding of categoricals (LocationType, Region, FuelType, Dummy2)
+- Binning of continuous predictors (e.g. Age/DrivAge, VehicleAge/VehAge)
+- Encoding of categoricals (e.g. LocationType/Area, Region, FuelType/VehGas)
 - Offset selection (Exposure)
 
 ## 5. Frequency Model

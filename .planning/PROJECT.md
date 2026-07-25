@@ -29,6 +29,8 @@ against the hidden data-generating model. All computation runs in the
 
 **In scope (V1 — frequency only, per `docs/car-insurance.md`)**
 - Synthetic Chapter 27 dataset (generator with hidden data-generating model) + CSV import
+- freMTPL2 real dataset (French motor TPL, 678k policies) as the "real world"
+  companion — frequency in V1; its severity table unlocks V2/V3
 - Data validation, profiling, one-way frequency analysis
 - Feature engineering: binning, encoding, offset selection
 - Frequency GLM: Poisson, log link, exposure offset
@@ -75,6 +77,12 @@ for all computation. Details: `docs/architecture.md`.
 - **Decision 5 — V1 follows the book (2026-07-25):** reproduce Parodi Chapter 27
   frequency-only before generalizing; versioned roadmap V1 frequency → V2 severity →
   V3 pure premium → V4 generic workbench (`docs/car-insurance.md`).
+- **Decision 6 — freMTPL2 as the real dataset (2026-07-25):** the standard actuarial
+  GLM benchmark (CC0, OpenML 41214/41215; CASdatasets origin) with interpretable
+  rating factors and a real severity table — chosen over anonymized Kaggle sets
+  (no educational value) and the tiny/aggregated Swedish data. Consequence: the
+  data layer uses a generic per-dataset spec (target/offset/predictors) rather than
+  hardcoded Chapter 27 column names (`docs/architecture.md` "Datasets").
 
 ## Working conventions
 

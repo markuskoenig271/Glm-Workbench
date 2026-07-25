@@ -38,8 +38,20 @@ policy) — pushed as `2b306ca`. Scaffold + rescope are NOT yet committed.
 - E2E smoke re-passed: HTTP 200, clean log, exactly the 6 V1 pages
   (`.planning/e2e-tests/scaffold-smoke.md`)
 
+## freMTPL2 added as the real dataset (same session, after user question)
+
+freMTPL2 freq+sev downloaded from OpenML (CC0) as Parquet into `data/raw/`
+(gitignored; download commands in README) and **verified**: freq 678,013 × 12
+(36,102 claims / ~358k policy-years), sev 26,639 claim amounts, 99.3% IDpol join.
+pyarrow added as dependency. Decision 6 recorded (PROJECT.md): freMTPL2 over
+anonymized Kaggle sets; consequence = **generic dataset spec** (target/offset/
+predictors per dataset) instead of hardcoded Chapter 27 columns — architecture.md
+"Datasets" section + ui_screens (Home/Import/Exploration) updated, freMTPL2
+constants + loader stubs in `pricing_engine/data.py`. Suite 8/8, ruff/mypy clean.
+`docs/car-insurance.md` (Markus' book spec) deliberately untouched.
+
 ## Next steps
 
-1. First implementation slice per TODO: the Chapter 27 dataset generator
-   (TDD-first), then Data Import
+1. First implementation slice per TODO: dataset spec/registry, then freMTPL2
+   loaders + Chapter 27 generator (TDD-first), then Data Import
 2. Open decision: SQLite storage scope (TODO.md)

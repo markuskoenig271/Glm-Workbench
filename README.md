@@ -23,6 +23,17 @@ uv run ruff check pricing_engine/ tests/
 uv run mypy pricing_engine/
 ```
 
+## Datasets
+
+Besides the built-in synthetic Chapter 27 dataset, the workbench uses the real
+**freMTPL2** French motor TPL data (CC0, from OpenML / CASdatasets). `data/` is
+gitignored — fetch the Parquet files once:
+
+```bash
+curl -sL -o data/raw/freMTPL2freq.parquet https://data.openml.org/datasets/0004/41214/dataset_41214.pq
+curl -sL -o data/raw/freMTPL2sev.parquet  https://data.openml.org/datasets/0004/41215/dataset_41215.pq
+```
+
 ## Docs
 
 - Spec: `.planning/PROJECT.md`

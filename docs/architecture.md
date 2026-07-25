@@ -67,15 +67,46 @@ Glm-Workbench/
 └── tests/
 ```
 
+## Datasets
+
+Two built-in datasets, plus CSV upload:
+
+1. **Chapter 27 synthetic** (~20k policies, generated) — the didactic V1 dataset;
+   the hidden data-generating model is kept alongside for the educational
+   estimated-vs-true coefficient comparison. See [car-insurance.md](car-insurance.md).
+2. **freMTPL2** (real French motor TPL data, licence CC0) — the "real world" dataset:
+   - `freMTPL2freq`: 678,013 policies — `ClaimNb` (target), `Exposure` (offset),
+     predictors `Area`, `VehPower`, `VehAge`, `DrivAge`, `BonusMalus`, `VehBrand`,
+     `VehGas`, `Density`, `Region`. Used in V1 (frequency).
+   - `freMTPL2sev`: 26,639 claim amounts joined by `IDpol` (~99.3% match freq —
+     known orphan records). Unlocks V2 severity / V3 pure premium with real data.
+   - Stored as Parquet in `data/raw/` (gitignored). Reproducible download from
+     OpenML: `https://data.openml.org/datasets/0004/41214/dataset_41214.pq` (freq)
+     and `.../0004/41215/dataset_41215.pq` (sev).
+
+**Design consequence — generic dataset spec:** freMTPL2 does not map 1:1 onto the
+Chapter 27 columns (Area is a density band, not urban/rural; BonusMalus ≠
+NoClaimYears; VehPower/VehBrand/Density have no counterpart). The data layer
+therefore describes every dataset by a spec (target column, offset column,
+predictor columns + types) instead of hardcoding column names; pages and
+`pricing_engine` operate on that spec. CSV uploads produce a spec via the
+column-mapping step in Data Import.
+
+**Scale note:** freMTPL2freq is ~678k rows (vs 20k synthetic). Exploration plots
+must aggregate or sample, and fitted models should be cached in session state —
+no naive per-row rendering.
+
 ## Components
 
 ### Data Layer
-- Import
+- Import (built-in datasets via registry, CSV upload via column mapping)
+- Dataset spec (target / offset / predictors) — see Datasets above
 - Validation
 - Data typing
 - Exposure checks
 - Synthetic Chapter 27 dataset generator (~20k policies, hidden data-generating
   model kept alongside for the educational coefficient comparison)
+- freMTPL2 Parquet loaders (pyarrow)
 
 ### Feature Engineering
 - Encoding
