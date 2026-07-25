@@ -23,10 +23,12 @@ st.markdown(
 )
 
 st.subheader("Workflow status")
-st.info(
-    "No dataset loaded yet. Loading the freMTPL2 dataset (678k real French motor "
-    "TPL policies) and project persistence are TODO."
-)
+if "spec" in st.session_state:
+    spec = st.session_state["spec"]
+    portfolio = st.session_state["portfolio"]
+    st.success(f"Active dataset: {spec.label} — {len(portfolio):,} rows")
+else:
+    st.info("No dataset loaded yet — start with Data Import.")
 
 st.subheader("Roadmap")
 st.markdown(

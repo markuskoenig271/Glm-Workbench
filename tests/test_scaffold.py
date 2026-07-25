@@ -67,8 +67,6 @@ def test_stubs_fail_loudly(sample_portfolio: pd.DataFrame) -> None:
     with pytest.raises(NotImplementedError):
         data.generate_chapter27_portfolio()
     with pytest.raises(NotImplementedError):
-        data.load_portfolio("portfolio.csv")
-    with pytest.raises(NotImplementedError):
         preprocessing.bin_numeric(sample_portfolio, "Age", bins=3)
     with pytest.raises(NotImplementedError):
         preprocessing.encode_categorical(sample_portfolio, ["Region"])

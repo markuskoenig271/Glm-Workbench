@@ -9,6 +9,7 @@ Chapter 27 dataset (docs/car-insurance.md) is backlogged.
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import IO
 
 import pandas as pd
 
@@ -199,6 +200,11 @@ def generate_chapter27_portfolio(
     raise NotImplementedError
 
 
-def load_portfolio(path: str | Path) -> pd.DataFrame:
-    """Load a portfolio CSV into a DataFrame (Data Import slice)."""
-    raise NotImplementedError
+def load_portfolio(source: str | Path | IO[bytes]) -> pd.DataFrame:
+    """Load a portfolio CSV from a path or a file-like object (e.g. an upload)."""
+    if isinstance(source, str | Path):
+        path = Path(source)
+        if not path.exists():
+            raise FileNotFoundError(f"Portfolio CSV not found at '{path}'.")
+        return pd.read_csv(path)
+    return pd.read_csv(source)

@@ -83,6 +83,27 @@ class TestFremtpl2Loaders:
             data.load_fremtpl2_sev(missing)
 
 
+class TestLoadPortfolio:
+    def test_load_from_csv_path(self, fremtpl2_sample: pd.DataFrame, tmp_path: Path) -> None:
+        csv = tmp_path / "portfolio.csv"
+        fremtpl2_sample.to_csv(csv, index=False)
+        df = data.load_portfolio(csv)
+        assert list(df.columns) == list(fremtpl2_sample.columns)
+        assert len(df) == len(fremtpl2_sample)
+
+    def test_load_from_buffer(self, fremtpl2_sample: pd.DataFrame) -> None:
+        import io
+
+        buffer = io.BytesIO(fremtpl2_sample.to_csv(index=False).encode())
+        df = data.load_portfolio(buffer)
+        assert list(df.columns) == list(fremtpl2_sample.columns)
+        assert len(df) == len(fremtpl2_sample)
+
+    def test_missing_path_error_is_friendly(self, tmp_path: Path) -> None:
+        with pytest.raises(FileNotFoundError, match="Portfolio CSV"):
+            data.load_portfolio(tmp_path / "nope.csv")
+
+
 class TestValidatePortfolio:
     def test_valid_frame_has_no_findings(self, fremtpl2_sample: pd.DataFrame) -> None:
         assert data.validate_portfolio(fremtpl2_sample, data.FREMTPL2_FREQ_SPEC) == []
