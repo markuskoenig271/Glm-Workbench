@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Superseded planning-state snapshots (see CLAUDE.md "Documentation Paths")
+.planning/archive/
