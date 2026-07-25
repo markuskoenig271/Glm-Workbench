@@ -79,19 +79,16 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
 
 ## V1.x — enhancements (next up)
 
-- [ ] **Stepwise variable selection (Markus' ask, 2026-07-25).** NO new tab —
-  a "Variable selection" section on `pages/04_Frequency_Model.py`:
-  direction (backward first / forward), criterion (AIC default / BIC), "Run
-  selection" button with progress (backward over 9 predictors ≈ 45 fits ≈
-  5–10 min on full data), step-log table (term dropped/added, AIC before/after),
-  "Adopt selected predictors" button writing the result into the shared spec
-  (Feature Engineering multiselect + formula preview follow automatically).
-  Engine: `stepwise_selection(df, spec, family, direction, criterion) ->
-  (selected_predictors, step_log)` in `glm.py`, looping `fit_frequency_glm`.
-  DECIDED: candidate fits are NOT recorded in the SQLite run history (would
-  flood it) — only the final adopted fit. Note for the docs: on 678k rows
-  p-values flag nearly everything significant, so selection is by
-  information criterion, not p-values.
+- [x] **Stepwise variable selection — DONE 2026-07-25** (as designed: no new
+  tab). `glm.stepwise_selection` (backward/forward, AIC/BIC, on_fit progress
+  callback, step log; candidate fits NOT recorded in run history) + "Variable
+  selection" section on `pages/04_Frequency_Model.py` (radios, st.status
+  progress, step-log table, Adopt button → shared spec). 6 unit tests (the
+  synthetic Noise factor is correctly dropped; suite 87). E2E
+  `.planning/e2e-tests/stepwise-selection.md`: engine TC on real data with a
+  reduced 3-predictor spec — all three kept (all genuine effects; stops after
+  round 1, 4 fits/9s), guard + section-render UI TCs passed; full UI run
+  manual/deferred (minutes by design).
 - [ ] Manual walkthrough by Markus + the deferred/manual TCs from the five
   E2E docs (selectbox/radio changes, CSV save, F5 history persistence)
 - [x] SQLite scope — DECIDED 2026-07-25 (decision 7 in `PROJECT.md`, storage

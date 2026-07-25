@@ -131,7 +131,7 @@ no naive per-row rendering.
 
 ### Modeling
 - Frequency GLMs (V1: Poisson, log link, exposure offset)
-- (Planned V1.x) Stepwise variable selection by information criterion —
+- Stepwise variable selection by information criterion (V1.x) —
   `glm.stepwise_selection` looping the fitter; UI section on the Frequency
   Model screen; only the adopted final fit enters the run history
 - Severity GLMs (V2)

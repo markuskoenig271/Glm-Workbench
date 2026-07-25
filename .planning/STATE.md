@@ -139,10 +139,19 @@ ruff/mypy clean; both E2E plans executed green (widget-change TCs deferred
 per precedent). tests/__init__.py added (mypy module-name fix); scipy in mypy
 overrides.
 
+## V1 committed (ba9cc3b) + stepwise slice built (V1.x, Markus' ask)
+
+`glm.stepwise_selection` (backward/forward by AIC/BIC, progress callback,
+step log; candidate fits NOT in run history) + "Variable selection" section on
+the Frequency Model page with Adopt-into-spec button. Suite 87, ruff/mypy
+clean. E2E: unit test proves Noise gets dropped; real-data reduced-spec run
+kept all 3 genuine predictors (correct — stops round 1, 9s); UI section
+renders; full UI run manual/deferred (minutes by design). Regularisation
+recorded as backlog with the no-inference trade-off.
+
 ## Next steps
 
-1. Commit the 4 uncommitted slices (feature-eng, freq-model, diagnostics,
-   prediction) — Markus asks for commits explicitly
-2. V1 polish candidates: manual walkthrough by Markus; deferred/manual TCs;
-   promote scratchpad Playwright scripts into a committed `e2e/` dir (TODO)
+1. Commit the stepwise slice
+2. Markus' manual walkthrough incl. the deferred/manual TCs (full stepwise
+   UI run: expect ~5-10 min); promote Playwright scripts to `e2e/` (TODO)
 3. Then V2 (severity) per roadmap — freMTPL2sev is already downloaded

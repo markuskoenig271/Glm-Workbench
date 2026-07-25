@@ -39,6 +39,52 @@ class TestBuildFormula:
             glm.build_formula(empty)
 
 
+class TestStepwiseSelection:
+    def test_backward_drops_noise_keeps_group(self, group_portfolio: pd.DataFrame) -> None:
+        from tests.conftest import GROUP_SPEC
+
+        selected, log = glm.stepwise_selection(group_portfolio, GROUP_SPEC)
+        assert selected == ("Group",)
+        assert list(log.columns) == ["step", "action", "n_predictors", "value"]
+        assert log.iloc[0]["action"] == "start"
+        assert "drop Noise" in list(log["action"])
+        # every improving step lowers the criterion
+        assert (log["value"].diff().dropna() <= 0).all()
+
+    def test_forward_adds_group_only(self, group_portfolio: pd.DataFrame) -> None:
+        from tests.conftest import GROUP_SPEC
+
+        selected, log = glm.stepwise_selection(group_portfolio, GROUP_SPEC, direction="forward")
+        assert selected == ("Group",)
+        assert "add Group" in list(log["action"])
+
+    def test_bic_criterion(self, group_portfolio: pd.DataFrame) -> None:
+        from tests.conftest import GROUP_SPEC
+
+        selected, _ = glm.stepwise_selection(group_portfolio, GROUP_SPEC, criterion="bic")
+        assert "Group" in selected
+
+    def test_on_fit_callback_called(self, group_portfolio: pd.DataFrame) -> None:
+        from tests.conftest import GROUP_SPEC
+
+        messages: list[str] = []
+        glm.stepwise_selection(group_portfolio, GROUP_SPEC, on_fit=messages.append)
+        # at least: 1 start fit + first-round candidates (2)
+        assert len(messages) >= 3
+
+    def test_bad_direction_raises(self, group_portfolio: pd.DataFrame) -> None:
+        from tests.conftest import GROUP_SPEC
+
+        with pytest.raises(ValueError, match="backward"):
+            glm.stepwise_selection(group_portfolio, GROUP_SPEC, direction="sideways")
+
+    def test_bad_criterion_raises(self, group_portfolio: pd.DataFrame) -> None:
+        from tests.conftest import GROUP_SPEC
+
+        with pytest.raises(ValueError, match="aic"):
+            glm.stepwise_selection(group_portfolio, GROUP_SPEC, criterion="r2")
+
+
 class TestFitFrequencyGlm:
     def test_poisson_recovers_group_effect(self, poisson_portfolio: pd.DataFrame) -> None:
         model = glm.fit_frequency_glm(

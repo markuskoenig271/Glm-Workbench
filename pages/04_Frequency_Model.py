@@ -1,5 +1,7 @@
 """Frequency Model (screen 5 in docs/ui_screens.md)."""
 
+from dataclasses import replace
+
 import streamlit as st
 
 from pricing_engine import diagnostics, glm, storage
@@ -104,6 +106,68 @@ if "freq_model" in st.session_state:
         )
     else:
         st.caption("All model terms are statistically significant (p < 0.05).")
+
+st.subheader("Variable selection")
+st.caption(
+    "Automated stepwise selection by information criterion. On a portfolio this "
+    "large nearly every term is 'significant', so selection goes by AIC/BIC — "
+    "a full pass refits the model many times (expect several minutes)."
+)
+sel_col1, sel_col2 = st.columns(2)
+direction = sel_col1.radio(
+    "Direction", glm.SELECTION_DIRECTIONS, horizontal=True, format_func=str.title
+)
+criterion = sel_col2.radio(
+    "Criterion", glm.SELECTION_CRITERIA, horizontal=True, format_func=str.upper
+)
+
+if flash := st.session_state.pop("adopt_flash", None):
+    st.success(flash)
+
+if st.button("Run selection"):
+    with st.status(
+        f"Running {direction} selection by {criterion.upper()}...", expanded=True
+    ) as status:
+        progress_line = st.empty()
+        selected, step_log = glm.stepwise_selection(
+            portfolio,
+            spec,
+            family=family,
+            direction=direction,
+            criterion=criterion,
+            on_fit=lambda msg: progress_line.text(msg),
+        )
+        progress_line.empty()
+        status.update(label="Selection complete", state="complete")
+    st.session_state["selection_result"] = {
+        "selected": selected,
+        "log": step_log,
+        "direction": direction,
+        "criterion": criterion,
+    }
+
+if "selection_result" in st.session_state:
+    result = st.session_state["selection_result"]
+    chosen = ", ".join(result["selected"]) if result["selected"] else "(intercept only)"
+    st.markdown(
+        f"**Selected predictors ({len(result['selected'])}), "
+        f"{result['direction']} by {result['criterion'].upper()}:** {chosen}"
+    )
+    st.dataframe(result["log"].round(1))
+
+    def _adopt_selection() -> None:
+        outcome = st.session_state["selection_result"]
+        st.session_state["spec"] = replace(
+            st.session_state["spec"], predictors=tuple(outcome["selected"])
+        )
+        if "predictor_select" in st.session_state:
+            st.session_state["predictor_select"] = list(outcome["selected"])
+        st.session_state["adopt_flash"] = (
+            f"Adopted {len(outcome['selected'])} predictor(s) — the formula above is "
+            "updated; fit the model to record the leaner run."
+        )
+
+    st.button("Adopt selected predictors", on_click=_adopt_selection)
 
 st.subheader("Run history")
 with storage.connect() as conn:

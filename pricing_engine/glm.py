@@ -6,6 +6,7 @@ the severity families follow in V2. Categorical predictors are treatment-coded
 automatically by the formula interface.
 """
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -48,6 +49,97 @@ def fit_frequency_glm(
     offset = np.log(df[offset_column]) if offset_column is not None else None
     model = smf.glm(formula, data=df, family=_FREQUENCY_FAMILY_BUILDERS[family](), offset=offset)
     return model.fit()
+
+
+SELECTION_DIRECTIONS = ["backward", "forward"]
+SELECTION_CRITERIA = ["aic", "bic"]
+
+
+def _criterion_value(model: Any, criterion: str) -> float:
+    return float(model.aic) if criterion == "aic" else float(model.bic_llf)
+
+
+def stepwise_selection(
+    df: pd.DataFrame,
+    spec: DatasetSpec,
+    family: str = "poisson",
+    direction: str = "backward",
+    criterion: str = "aic",
+    on_fit: Callable[[str], None] | None = None,
+) -> tuple[tuple[str, ...], pd.DataFrame]:
+    """Stepwise variable selection by information criterion.
+
+    Backward: drop the predictor whose removal most improves the criterion,
+    repeat until no removal improves. Forward: start from intercept-only and
+    add the best-improving predictor until none improves. Returns the selected
+    predictors and a step log (one row per accepted step, "start" first).
+
+    On large portfolios select by AIC/BIC, not p-values — at this scale nearly
+    every term is "significant".
+    """
+    if direction not in SELECTION_DIRECTIONS:
+        raise ValueError(
+            f"Unknown direction '{direction}' — valid: {', '.join(SELECTION_DIRECTIONS)}"
+        )
+    if criterion not in SELECTION_CRITERIA:
+        raise ValueError(
+            f"Unknown criterion '{criterion}' — valid: {', '.join(SELECTION_CRITERIA)}"
+        )
+
+    def fit_score(predictors: list[str], label: str) -> float:
+        if on_fit is not None:
+            on_fit(label)
+        terms = " + ".join(predictors) if predictors else "1"
+        model = fit_frequency_glm(
+            df, f"{spec.target} ~ {terms}", family=family, offset_column=spec.offset
+        )
+        return _criterion_value(model, criterion)
+
+    current = list(spec.predictors) if direction == "backward" else []
+    remaining = [] if direction == "backward" else list(spec.predictors)
+    current_value = fit_score(current, "start: fitting the starting model")
+
+    log_rows: list[dict[str, object]] = [
+        {"step": 0, "action": "start", "n_predictors": len(current), "value": current_value}
+    ]
+    step = 0
+    while True:
+        candidates = current if direction == "backward" else remaining
+        if not candidates:
+            break
+        best_term: str | None = None
+        best_value = current_value
+        for term in candidates:
+            if direction == "backward":
+                trial = [p for p in current if p != term]
+                label = f"trying without {term}"
+            else:
+                trial = [*current, term]
+                label = f"trying with {term}"
+            value = fit_score(trial, label)
+            if value < best_value:
+                best_term, best_value = term, value
+        if best_term is None:
+            break
+        step += 1
+        if direction == "backward":
+            current = [p for p in current if p != best_term]
+            action = f"drop {best_term}"
+        else:
+            current = [*current, best_term]
+            remaining = [p for p in remaining if p != best_term]
+            action = f"add {best_term}"
+        current_value = best_value
+        log_rows.append(
+            {
+                "step": step,
+                "action": action,
+                "n_predictors": len(current),
+                "value": current_value,
+            }
+        )
+
+    return tuple(current), pd.DataFrame(log_rows)
 
 
 def fit_severity_glm(
