@@ -5,153 +5,65 @@ Read this + `TODO.md` at the start of every session. See `PROJECT.md` for the sp
 
 ---
 
-## Last updated: 2026-07-25 (session 1 — bootstrap, scaffold, V1 rescope)
+## Last updated: 2026-07-25 (session 1 — from empty repo to V1 + stepwise, all pushed)
 
 ## Headline
 
-Repo went from empty to a verified running scaffold, then **rescoped to V1 =
-Chapter 27 frequency-only** after Markus added `docs/car-insurance.md` (Parodi,
-*Pricing in General Insurance*): the app reproduces the book's motor frequency
-example before generalizing (roadmap V1 frequency → V2 severity → V3 pure
-premium → V4 generic).
+**V1 is complete and live**: the full Chapter-27 frequency workflow on the real
+freMTPL2 dataset (678,013 policies), all 7 screens working, plus the V1.x
+stepwise-variable-selection enhancement. Everything through `89025e9` is on
+`origin/main`; only a TODO.md edit (regularisation rediscuss note) is pending
+commit. Suite **87 passed / 99.4% coverage**, ruff + mypy clean, six E2E slices
+executed green against real data. Markus was testing the app at the session end
+(`streamlit run app.py`, port 8501 — running in a background task).
 
-Earlier in the session: bootstrap cleanup (planning files had been copied from
-another project and were reset; CLAUDE.md purged; plain committed `STATE.md`
-policy) — pushed as `2b306ca`. Scaffold + rescope are NOT yet committed.
+## What exists (one session!)
 
-## What the rescope changed
+- Bootstrap: cleaned copied-over planning files, CLAUDE.md, gitignore; spec'd
+  PROJECT.md; scaffold; V1 rescope to Parodi Ch. 27 after Markus added
+  docs/car-insurance.md; freMTPL2 chosen + downloaded (decision 6, CC0,
+  data/raw/*.parquet, download commands in README).
+- `pricing_engine/`: data (DatasetSpec/registry/loaders/validation),
+  exploration (aggregate-only), preprocessing (bin/log/encode/cap),
+  glm (fit + stepwise_selection), diagnostics (coeffs/CIs/residuals/QQ/
+  calibration), prediction (frequency single+batch), storage (SQLite
+  model_runs, decision 7; data/workbench.db, GLM_DB_PATH override).
+- `pages/01–06` + Home: Import (built-in + CSV upload w/ column mapping) →
+  Exploration → Feature Engineering → Frequency Model (fit + variable
+  selection + run history) → Diagnostics → Prediction (what-if + batch + CSV).
 
-- `docs/ui_screens.md` rewritten: 7 V1 screens, V2+ screens moved to a roadmap
-  section; `docs/architecture.md` updated (V1 markers, roadmap, Chapter 27
-  generator in the data layer) + repo-layout drift fixed
-- `pages/`: now 01–06 (Data Import, Exploration, Feature Engineering, Frequency
-  Model, Diagnostics, Prediction); Severity/Pure Premium/Reports pages deleted
-- `pricing_engine/data.py`: Chapter 27 schema constants (target `Claims`, offset
-  `Exposure`, 8 predictors incl. no-effect Dummy1/Dummy2) +
-  `generate_chapter27_portfolio` stub returning (portfolio, hidden true coefficients)
-- `prediction.py` gained `predict_frequency` (V1); `diagnostics.py` gained
-  `residuals` + `compare_with_true_model`; PROJECT.md decision 5 recorded
+## Verified headline numbers (E2E, real data)
 
-## Verified (after rescope)
+- Overall frequency **0.1007**; full Poisson fit ~12s; AIC 286,703;
+  BonusMalus +2.3%/point (p≪0.001); calibration weighted-pred = observed;
+  in-sample balance EXACT (expected 36,102 = observed 36,102); stepwise
+  forward adds BonusMalus → DrivAge → VehGas in strength order; Exposure
+  quirk: 1,224 rows > 1.0, cap button in Feature Engineering.
 
-- `uv run pytest`: 7/7 passed, coverage gate green; ruff + format + mypy clean
-- E2E smoke re-passed: HTTP 200, clean log, exactly the 6 V1 pages
-  (`.planning/e2e-tests/scaffold-smoke.md`)
+## Working agreements / lessons (keep honoring these)
 
-## freMTPL2 added as the real dataset (same session, after user question)
+- Change Validation Workflow every slice: BA/Test agent writes
+  `.planning/e2e-tests/<slice>.md`, I execute + record Results. TDD first.
+- Playwright lessons live in the E2E docs' notes (one tab + sidebar nav —
+  goto/refresh drops session state; expect-before-count on progressive
+  renders; defaults-only widgets, changes deferred/manual; engine TCs for
+  numeric truths; never delete data/workbench.db).
+- Commits only when Markus says so; conventional commits, no Co-Authored-By.
 
-freMTPL2 freq+sev downloaded from OpenML (CC0) as Parquet into `data/raw/`
-(gitignored; download commands in README) and **verified**: freq 678,013 × 12
-(36,102 claims / ~358k policy-years), sev 26,639 claim amounts, 99.3% IDpol join.
-pyarrow added as dependency. Decision 6 recorded (PROJECT.md): freMTPL2 over
-anonymized Kaggle sets; consequence = **generic dataset spec** (target/offset/
-predictors per dataset) instead of hardcoded Chapter 27 columns — architecture.md
-"Datasets" section + ui_screens (Home/Import/Exploration) updated, freMTPL2
-constants + loader stubs in `pricing_engine/data.py`. Suite 8/8, ruff/mypy clean.
-`docs/car-insurance.md` (Markus' book spec) deliberately untouched.
+## Open / next steps
 
-## Synthetic generator backlogged (Markus' call, end of session)
+1. Commit the pending TODO.md note (this save-session commit).
+2. **Rediscuss regularisation with Markus** (TODO backlog item, his ask —
+   wants it in "somehow"; settle the degraded-inference-view framing).
+3. Markus' manual walkthrough: deferred/manual TCs incl. the full 9-predictor
+   stepwise UI run (~5–10 min; expect all 9 to survive).
+4. Housekeeping TODO: promote scratchpad Playwright runners into a committed
+   `e2e/` dir.
+5. Then V2 — Severity GLM (freMTPL2sev already in data/raw;
+   `fit_severity_glm` is the last engine stub).
 
-freMTPL2 is now the V1 primary dataset; the Chapter 27 generator + the
-educational features needing its hidden DGM (`compare_with_true_model`,
-Dummy1/Dummy2 demo) moved to the TODO Backlog. Docs synced on Markus'
-instruction: architecture.md (Datasets reordered, backlog markers),
-ui_screens.md (Home/Import freMTPL2-only, backlog markers, roadmap), and
-car-insurance.md got an implementation-status note at the top — its book-spec
-body deliberately unchanged.
+## Architecture drift check (per CLAUDE.md save protocol)
 
-## First implementation slice DONE: dataset spec + loaders (same session)
-
-`pricing_engine/data.py` now real (first non-stub code): `DatasetSpec` frozen
-dataclass, `DATASET_REGISTRY`/`list_datasets`/`load_dataset` (returns (df, spec)),
-`load_fremtpl2_freq`/`_sev`, `validate_portfolio(df, spec)`. TDD: red (17 fail) →
-green; suite 26 passed, coverage 99%, ruff/mypy clean. Change Validation Workflow
-followed: BA/Test agent wrote `.planning/e2e-tests/dataset-spec-loaders.md`
-(8 TCs), all executed against the real data — 8/8 PASS, load+validate 678k rows
-in 0.04s. Two E2E-doc adjustments recorded in its Results section (tuple return
-API; uint8 casts in the broken-portfolio TC). No architecture drift — code matches
-the "Datasets" section.
-
-## Data Import slice DONE (same session) — first real UI feature
-
-Engine: `load_portfolio` (CSV path or upload buffer). UI: `pages/01_Data_Import.py`
-(built-in load via registry → session_state, CSV upload + column mapping →
-ad-hoc DatasetSpec, preview + validation report) and Home shows the active
-dataset. Playwright (1.61 + Chromium) added as the E2E harness — first UI E2E:
-`.planning/e2e-tests/data-import.md`, TC1–TC4/TC6/TC7 PASSED, TC5 deferred.
-Suite 29 passed, ruff/mypy clean.
-
-**Streamlit lessons (cost real debugging time, recorded in the E2E doc):**
-sidebar-link navigation keeps `st.session_state`, a full reload/goto starts a
-new session (dataset gone after browser refresh — expected behavior for now);
-BaseWeb combobox values aren't readable via get_by_text; glide-data-grid
-renders hidden header cells that shadow text queries; use `.first` for text
-appearing in both message and caption.
-
-## Data Exploration slice DONE (same session)
-
-New `pricing_engine/exploration.py` — aggregate-only engine functions (suite 43,
-coverage 99%). `pages/02_Data_Exploration.py`: guard → metrics row (freMTPL2:
-678,013 policies / 358,499 exposure / 36,102 claims / frequency 0.1007) →
-summary table → one-way frequency (Altair, `sort=None` to keep quantile-band
-order; plain st.bar_chart would alphabetize) → histogram → correlations.
-E2E TC1–TC8 all passed first run; TC9 (selectbox change) deferred/manual.
-Performance: summary + all 9 one-ways on full data in 0.32s. Dataviz-skill
-rules applied: single hue (#4c78a8), no legend on single series, tooltips,
-table views accompany charts. SQLite decision 7 recorded earlier this session.
-
-## Feature Engineering slice DONE (same session)
-
-`pricing_engine/preprocessing.py` real (bin/log/encode/cap; suite 56, 99.5%
-coverage). `pages/03_Feature_Engineering.py`: predictors multiselect → spec,
-exposure cap (real data: 1,224 rows > 1.0), band + log builders that append to
-the spec, encoding info note (GLM formula encodes automatically — no manual
-one-hot on 678k rows), live spec summary. Key implementation pattern: ALL
-mutations in on_click/on_change callbacks + flash messages — direct
-session_state writes after widget instantiation would throw. E2E: engine +
-guard/setup/cap/binning/downstream TCs all passed first run; TC8
-deferred/manual.
-
-## Frequency Model slice DONE (same session) — the workbench fits real GLMs
-
-Engine: `glm.build_formula`/`fit_frequency_glm` (Poisson/NegBin, log link,
-log-exposure offset), `diagnostics.coefficient_table` (exp_coef, significance)
-+ `information_criteria`, NEW `storage.py` (decision 7 delivered: SQLite
-model_runs, GLM_DB_PATH override). UI `pages/04_Frequency_Model.py`: family
-select → formula preview → spinner fit → metrics → coefficient table with
-plain-language strongest-effects lines + insignificance warning → persistent
-run history. Suite 70 passed, 99.6% coverage, ruff/mypy clean.
-
-**Real-data results (E2E-verified):** full Poisson fit on 678,013 rows in
-~12 s; exp(Intercept)=0.0191; BonusMalus +2.3% per point (p≪0.001) — domain
-truth holds; AIC 286,703. Playwright lesson added: after an action, await
-late-rendered sections with expect() before non-waiting .count() asserts.
-
-## Diagnostics + Prediction slices DONE (same session) — V1 COMPLETE
-
-All 7 V1 screens are functional. Diagnostics: residuals/QQ/decile-calibration
-engine functions (aggregate-only; 0.15s on 678k) + CI-whisker relativity chart,
-residual histogram, QQ, observed-vs-predicted grouped bars, statsmodels summary.
-Prediction: predict_frequency (offset-free rate × exposure; in-sample balance
-EXACT — expected 36,102 = observed 36,102) + single-policy what-if with
-median defaults + batch with CSV download. Suite 81 passed, 99.6% coverage,
-ruff/mypy clean; both E2E plans executed green (widget-change TCs deferred
-per precedent). tests/__init__.py added (mypy module-name fix); scipy in mypy
-overrides.
-
-## V1 committed (ba9cc3b) + stepwise slice built (V1.x, Markus' ask)
-
-`glm.stepwise_selection` (backward/forward by AIC/BIC, progress callback,
-step log; candidate fits NOT in run history) + "Variable selection" section on
-the Frequency Model page with Adopt-into-spec button. Suite 87, ruff/mypy
-clean. E2E: unit test proves Noise gets dropped; real-data reduced-spec run
-kept all 3 genuine predictors (correct — stops round 1, 9s); UI section
-renders; full UI run manual/deferred (minutes by design). Regularisation
-recorded as backlog with the no-inference trade-off.
-
-## Next steps
-
-1. Commit the stepwise slice
-2. Markus' manual walkthrough incl. the deferred/manual TCs (full stepwise
-   UI run: expect ~5-10 min); promote Playwright scripts to `e2e/` (TODO)
-3. Then V2 (severity) per roadmap — freMTPL2sev is already downloaded
+None open — architecture.md and ui_screens.md were updated in-session with
+each slice (Datasets section, exploration/storage modules, stepwise section);
+code and docs are in sync as of `89025e9`.

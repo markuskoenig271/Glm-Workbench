@@ -105,13 +105,18 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   model: `compare_with_true_model` diagnostic, Dummy1/Dummy2 insignificance demo.
   Slots in behind the dataset spec as a second registered dataset (stubs already
   in `pricing_engine/`). Deferred 2026-07-25 in favour of real-data-first.
-- [ ] **Regularisation (lasso/ridge/elastic net)** — defer to the ML-challenger
-  chapter (V4 "XGBoost comparison" territory). statsmodels `fit_regularized`
-  makes it cheap to add as a Frequency Model option (penalty + alpha), BUT
-  penalised fits return no std errors/p-values/CIs → needs a degraded
-  coefficient view instead of the inference table. Record that trade-off in
-  the design when it comes; typical actuarial practice keeps pricing GLMs
-  unpenalised for interpretability.
+- [ ] **Regularisation (lasso/ridge/elastic net) — REDISCUSS with Markus**
+  (2026-07-25: he wants to revisit this and eventually put it in somehow, ahead
+  of the original V4 deferral). Sketch when discussing: a "Regularisation"
+  option on the Frequency Model page (none default / lasso / ridge / elastic
+  net + alpha input) via statsmodels `fit_regularized`; lasso's zeroed
+  coefficients would complement stepwise as a second selection lens. The
+  trade-off to settle in the discussion: penalised fits return no std
+  errors/p-values/CIs → needs a degraded coefficient view (coefficients +
+  relativities only, explicit note about missing inference; Diagnostics
+  CI-whisker chart and significance highlighting don't apply). Typical
+  actuarial practice keeps pricing GLMs unpenalised for interpretability —
+  decide framing (educational comparison feature vs. modelling tool).
 - [ ] V2+ roadmap items (severity, pure premium, generic workbench, reports) —
   tracked in `PROJECT.md` / `docs/architecture.md`
 
