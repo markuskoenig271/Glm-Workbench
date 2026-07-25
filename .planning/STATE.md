@@ -100,10 +100,49 @@ Performance: summary + all 9 one-ways on full data in 0.32s. Dataviz-skill
 rules applied: single hue (#4c78a8), no legend on single series, tooltips,
 table views accompany charts. SQLite decision 7 recorded earlier this session.
 
+## Feature Engineering slice DONE (same session)
+
+`pricing_engine/preprocessing.py` real (bin/log/encode/cap; suite 56, 99.5%
+coverage). `pages/03_Feature_Engineering.py`: predictors multiselect → spec,
+exposure cap (real data: 1,224 rows > 1.0), band + log builders that append to
+the spec, encoding info note (GLM formula encodes automatically — no manual
+one-hot on 678k rows), live spec summary. Key implementation pattern: ALL
+mutations in on_click/on_change callbacks + flash messages — direct
+session_state writes after widget instantiation would throw. E2E: engine +
+guard/setup/cap/binning/downstream TCs all passed first run; TC8
+deferred/manual.
+
+## Frequency Model slice DONE (same session) — the workbench fits real GLMs
+
+Engine: `glm.build_formula`/`fit_frequency_glm` (Poisson/NegBin, log link,
+log-exposure offset), `diagnostics.coefficient_table` (exp_coef, significance)
++ `information_criteria`, NEW `storage.py` (decision 7 delivered: SQLite
+model_runs, GLM_DB_PATH override). UI `pages/04_Frequency_Model.py`: family
+select → formula preview → spinner fit → metrics → coefficient table with
+plain-language strongest-effects lines + insignificance warning → persistent
+run history. Suite 70 passed, 99.6% coverage, ruff/mypy clean.
+
+**Real-data results (E2E-verified):** full Poisson fit on 678,013 rows in
+~12 s; exp(Intercept)=0.0191; BonusMalus +2.3% per point (p≪0.001) — domain
+truth holds; AIC 286,703. Playwright lesson added: after an action, await
+late-rendered sections with expect() before non-waiting .count() asserts.
+
+## Diagnostics + Prediction slices DONE (same session) — V1 COMPLETE
+
+All 7 V1 screens are functional. Diagnostics: residuals/QQ/decile-calibration
+engine functions (aggregate-only; 0.15s on 678k) + CI-whisker relativity chart,
+residual histogram, QQ, observed-vs-predicted grouped bars, statsmodels summary.
+Prediction: predict_frequency (offset-free rate × exposure; in-sample balance
+EXACT — expected 36,102 = observed 36,102) + single-policy what-if with
+median defaults + batch with CSV download. Suite 81 passed, 99.6% coverage,
+ruff/mypy clean; both E2E plans executed green (widget-change TCs deferred
+per precedent). tests/__init__.py added (mypy module-name fix); scipy in mypy
+overrides.
+
 ## Next steps
 
-1. Feature Engineering slice (binning, encoding, offset selection per
-   ui_screens screen 4)
-2. Then Frequency Model slice — brings the SQLite storage module with it
-   (decision 7) — then Diagnostics, then Prediction
-3. Promote scratchpad Playwright scripts into a committed `e2e/` dir (TODO)
+1. Commit the 4 uncommitted slices (feature-eng, freq-model, diagnostics,
+   prediction) — Markus asks for commits explicitly
+2. V1 polish candidates: manual walkthrough by Markus; deferred/manual TCs;
+   promote scratchpad Playwright scripts into a committed `e2e/` dir (TODO)
+3. Then V2 (severity) per roadmap — freMTPL2sev is already downloaded

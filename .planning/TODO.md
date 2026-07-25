@@ -41,18 +41,47 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   E2E `.planning/e2e-tests/data-exploration.md`: TC1–TC8 PASSED (freMTPL2
   frequency 0.1007; all-predictor aggregation in 0.32s), TC9 deferred/manual.
   architecture.md module diagram synced (exploration.py added).
-- [ ] **Feature Engineering slice** — binning (DrivAge, VehAge), encoding, offset
-- [ ] **Frequency Model slice** — `fit_frequency_glm` (Poisson, log link, exposure
-  offset), coefficient table with p-values/deviance/AIC; educational aids
-  (exp(beta) relativities, plain-language explanations, insignificance highlight)
-- [ ] **Diagnostics slice** — CIs, deviance/Pearson residual plots, observed vs
-  predicted (true-model comparison is backlogged with the generator)
-- [ ] **Prediction slice** — `predict_frequency` single + batch, CSV export
+- [x] **Feature Engineering slice — DONE 2026-07-25.**
+  `pricing_engine/preprocessing.py` implemented (bin_numeric quantile/uniform →
+  `<col>_band`, log_transform → `<col>_log`, encode_categorical drop_first,
+  cap_column; 13 unit tests, suite 56) + `pages/03_Feature_Engineering.py`
+  (variables multiselect wired to spec, exposure cap at 1.0 — real data: 1,224
+  rows, binning + log-transform builders appending to spec predictors, encoding
+  info note, live spec summary; all mutations via callbacks). E2E
+  `.planning/e2e-tests/feature-engineering.md`: all executed TCs PASSED,
+  TC8 deferred/manual.
+- [x] **Frequency Model slice — DONE 2026-07-25.** `glm.build_formula` +
+  `fit_frequency_glm` (Poisson/NegBin, log link, log-exposure offset),
+  `diagnostics.coefficient_table` (exp_coef relativities, significance flag) +
+  `information_criteria`, NEW `pricing_engine/storage.py` (decision 7 delivered:
+  SQLite model_runs at data/workbench.db, GLM_DB_PATH override) +
+  `pages/04_Frequency_Model.py` (family select, formula preview, spinner fit,
+  metrics, coefficient table, plain-language strongest-effects + insignificance
+  warning, persistent run history). 14 new unit tests (suite 70). E2E
+  `.planning/e2e-tests/frequency-model.md`: all executed TCs PASSED (real fit
+  11.5s, BonusMalus +2.3%/point p≪0.001, AIC 286,703), TC8 deferred/manual.
+- [x] **Diagnostics slice — DONE 2026-07-25.** Engine: `residuals` (deviance/
+  pearson), `residual_histogram`, `qq_data`, `observed_vs_predicted` (decile
+  calibration, aggregate-only) + shared fitted-model fixtures in conftest.
+  UI `pages/05_Diagnostics.py`: model guard, metrics, exp(coef) CI-whisker
+  chart with 1.0 reference, residual histogram + kind radio, QQ plot,
+  observed-vs-predicted grouped bars (2 series + legend), statsmodels summary
+  expander. E2E `.planning/e2e-tests/diagnostics.md`: all executed TCs PASSED
+  (4 diagnostics on 678k in 0.15s; weighted predicted freq 0.1007 == observed).
+- [x] **Prediction slice — DONE 2026-07-25.** Engine: `predict_frequency`
+  (offset-free rate + exposure-scaled claims, copy semantics, missing-predictor
+  ValueError). UI `pages/06_Prediction.py`: model guard, single-policy what-if
+  (median-default widgets per predictor + exposure input), batch prediction
+  with summary metrics + preview + CSV download. E2E
+  `.planning/e2e-tests/prediction.md`: all executed TCs PASSED (full predict
+  2.0s; **in-sample balance exact: expected 36,102 = observed 36,102**).
+  **→ V1 workflow complete: all 7 screens functional.**
 - [x] SQLite scope — DECIDED 2026-07-25 (decision 7 in `PROJECT.md`, storage
   section in `docs/architecture.md`): workbench state + model run history,
   never portfolio data; implemented lazily.
-- [ ] SQLite schema + `storage` module (first consumer: record model runs) —
-  build WITH the Frequency Model slice per decision 7
+- [x] SQLite schema + `storage` module — DONE 2026-07-25 with the Frequency
+  Model slice (model_runs table; workbench-state/"projects" tables follow when
+  a consumer needs them)
 
 ## Backlog
 

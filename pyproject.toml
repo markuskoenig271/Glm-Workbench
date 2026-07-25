@@ -50,5 +50,5 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["statsmodels.*", "streamlit.*"]
+module = ["statsmodels.*", "streamlit.*", "scipy.*"]
 ignore_missing_imports = true

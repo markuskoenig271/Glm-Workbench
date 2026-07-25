@@ -3,9 +3,14 @@
 import sqlite3
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
+
+from pricing_engine import glm
+from pricing_engine.data import DatasetSpec
 
 
 @pytest.fixture
@@ -34,6 +39,41 @@ def fremtpl2_sample() -> pd.DataFrame:
             "Density": [1217.0, 1217.0, 54.0, 3000.0],
             "Region": ["R82", "R82", "R22", "R11"],
         }
+    )
+
+
+GROUP_SPEC = DatasetSpec(
+    name="test_group",
+    label="Test group portfolio",
+    target="ClaimNb",
+    offset="Exposure",
+    predictors=("Group", "Noise"),
+)
+
+
+@pytest.fixture
+def group_portfolio() -> pd.DataFrame:
+    """2k-row portfolio with a real Poisson signal (B ~3x A) and a no-effect Noise factor."""
+    rng = np.random.default_rng(7)
+    n = 2_000
+    group = rng.choice(["A", "B"], size=n)
+    exposure = rng.uniform(0.1, 1.0, size=n)
+    rate = np.where(group == "A", 0.1, 0.3)
+    return pd.DataFrame(
+        {
+            "ClaimNb": rng.poisson(rate * exposure),
+            "Exposure": exposure,
+            "Group": group,
+            "Noise": rng.choice(["X", "Y"], size=n),
+        }
+    )
+
+
+@pytest.fixture
+def fitted_model(group_portfolio: pd.DataFrame) -> Any:
+    """A converged Poisson GLM on the group portfolio (offset log Exposure)."""
+    return glm.fit_frequency_glm(
+        group_portfolio, "ClaimNb ~ Group + Noise", offset_column="Exposure"
     )
 
 
