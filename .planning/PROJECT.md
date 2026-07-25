@@ -84,6 +84,15 @@ for all computation. Details: `docs/architecture.md`.
   (no educational value) and the tiny/aggregated Swedish data. Consequence: the
   data layer uses a generic per-dataset spec (target/offset/predictors) rather than
   hardcoded Chapter 27 column names (`docs/architecture.md` "Datasets").
+- **Decision 7 — SQLite stores workbench state, never portfolio data (2026-07-25):**
+  SQLite holds (a) workbench state / "projects" — dataset choice, column mapping,
+  feature-engineering settings, so a returning user restores their session — and
+  (b) model run history — dataset, formula, family, coefficients, AIC/BIC/deviance,
+  timestamp — enabling cross-session model comparison (seed of experiment
+  tracking). Portfolio data stays in Parquet/CSV (SQLite would be a slower copy).
+  Implemented lazily: tables arrive with their first consumer (model run history
+  with the Frequency Model slice). Until then, in-session state only — a browser
+  refresh drops the loaded dataset (known Streamlit behavior).
 
 ## Working conventions
 

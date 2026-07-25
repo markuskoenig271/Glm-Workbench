@@ -72,9 +72,26 @@ in 0.04s. Two E2E-doc adjustments recorded in its Results section (tuple return
 API; uint8 casts in the broken-portfolio TC). No architecture drift — code matches
 the "Datasets" section.
 
+## Data Import slice DONE (same session) — first real UI feature
+
+Engine: `load_portfolio` (CSV path or upload buffer). UI: `pages/01_Data_Import.py`
+(built-in load via registry → session_state, CSV upload + column mapping →
+ad-hoc DatasetSpec, preview + validation report) and Home shows the active
+dataset. Playwright (1.61 + Chromium) added as the E2E harness — first UI E2E:
+`.planning/e2e-tests/data-import.md`, TC1–TC4/TC6/TC7 PASSED, TC5 deferred.
+Suite 29 passed, ruff/mypy clean.
+
+**Streamlit lessons (cost real debugging time, recorded in the E2E doc):**
+sidebar-link navigation keeps `st.session_state`, a full reload/goto starts a
+new session (dataset gone after browser refresh — expected behavior for now);
+BaseWeb combobox values aren't readable via get_by_text; glide-data-grid
+renders hidden header cells that shadow text queries; use `.first` for text
+appearing in both message and caption.
+
 ## Next steps
 
-1. Data Import slice: `load_portfolio` (CSV) TDD-first, then
-   `pages/01_Data_Import.py` (registry-driven dataset choice, preview,
-   validation report)
-2. Open decision: SQLite storage scope (TODO.md)
+1. Data Exploration slice (summary stats, histograms, one-way frequencies —
+   aggregate/sample, no raw-row rendering)
+2. Promote the scratchpad Playwright scripts into a committed `e2e/` dir
+   (TODO item) once a second UI slice exists
+3. Open decision: SQLite storage scope (TODO.md)

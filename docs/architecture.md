@@ -112,6 +112,16 @@ no naive per-row rendering.
 - (Backlog) Synthetic Chapter 27 dataset generator (~20k policies, hidden
   data-generating model kept alongside for the educational coefficient comparison)
 
+### Storage (SQLite — decision 7 in `.planning/PROJECT.md`)
+- **Workbench state / projects:** dataset choice, column mapping,
+  feature-engineering settings — restores a returning user's session
+- **Model run history:** dataset, formula, family, coefficients,
+  AIC/BIC/deviance, timestamp — cross-session model comparison
+- **Never portfolio data** — that stays in Parquet/CSV
+- Implemented lazily: tables arrive with their first consumer (run history with
+  the Frequency Model slice). Until then, in-session state only; a browser
+  refresh drops the loaded dataset.
+
 ### Feature Engineering
 - Encoding
 - Transformations
