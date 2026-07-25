@@ -88,10 +88,22 @@ BaseWeb combobox values aren't readable via get_by_text; glide-data-grid
 renders hidden header cells that shadow text queries; use `.first` for text
 appearing in both message and caption.
 
+## Data Exploration slice DONE (same session)
+
+New `pricing_engine/exploration.py` — aggregate-only engine functions (suite 43,
+coverage 99%). `pages/02_Data_Exploration.py`: guard → metrics row (freMTPL2:
+678,013 policies / 358,499 exposure / 36,102 claims / frequency 0.1007) →
+summary table → one-way frequency (Altair, `sort=None` to keep quantile-band
+order; plain st.bar_chart would alphabetize) → histogram → correlations.
+E2E TC1–TC8 all passed first run; TC9 (selectbox change) deferred/manual.
+Performance: summary + all 9 one-ways on full data in 0.32s. Dataviz-skill
+rules applied: single hue (#4c78a8), no legend on single series, tooltips,
+table views accompany charts. SQLite decision 7 recorded earlier this session.
+
 ## Next steps
 
-1. Data Exploration slice (summary stats, histograms, one-way frequencies —
-   aggregate/sample, no raw-row rendering)
-2. Promote the scratchpad Playwright scripts into a committed `e2e/` dir
-   (TODO item) once a second UI slice exists
-3. Open decision: SQLite storage scope (TODO.md)
+1. Feature Engineering slice (binning, encoding, offset selection per
+   ui_screens screen 4)
+2. Then Frequency Model slice — brings the SQLite storage module with it
+   (decision 7) — then Diagnostics, then Prediction
+3. Promote scratchpad Playwright scripts into a committed `e2e/` dir (TODO)

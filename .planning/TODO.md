@@ -32,8 +32,15 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   committed `e2e/` directory (run manually, not part of `pytest`) once a second
   UI slice exists — currently the executed scripts live only in the session
   scratchpad
-- [ ] **Data Exploration slice** — summary stats, histograms, one-way claim
-  frequency by predictor; aggregate/sample for 678k rows (no raw-row rendering)
+- [x] **Data Exploration slice — DONE 2026-07-25.** New module
+  `pricing_engine/exploration.py` (aggregate-only: `portfolio_frequency`,
+  `summarize_portfolio`, `one_way_frequency` with quantile binning,
+  `histogram`, `correlation_matrix`; 14 unit tests, suite 43) +
+  `pages/02_Data_Exploration.py` (guard, metric row, summary table, one-way
+  Altair chart + expander table, histogram chart, correlation matrix).
+  E2E `.planning/e2e-tests/data-exploration.md`: TC1–TC8 PASSED (freMTPL2
+  frequency 0.1007; all-predictor aggregation in 0.32s), TC9 deferred/manual.
+  architecture.md module diagram synced (exploration.py added).
 - [ ] **Feature Engineering slice** — binning (DrivAge, VehAge), encoding, offset
 - [ ] **Frequency Model slice** — `fit_frequency_glm` (Poisson, log link, exposure
   offset), coefficient table with p-values/deviance/AIC; educational aids

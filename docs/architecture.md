@@ -42,6 +42,7 @@ Streamlit UI (V1 pages)
 
 pricing_engine/
     data.py            # import, validation, freMTPL2 loaders, dataset spec
+    exploration.py     # aggregate-only: summary, one-way frequencies, histograms
     preprocessing.py
     glm.py             # frequency (V1) + severity (V2) fitting
     prediction.py      # frequency prediction (V1), pure premium (V3)
