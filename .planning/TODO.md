@@ -28,10 +28,13 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   E2E): `.planning/e2e-tests/data-import.md` — TC1–TC4, TC6, TC7 PASSED, TC5
   deferred/manual. Known Streamlit behavior: browser refresh = new session =
   dataset must be reloaded.
-- [ ] E2E runner harness: promote the scratchpad Playwright scripts into a
-  committed `e2e/` directory (run manually, not part of `pytest`) once a second
-  UI slice exists — currently the executed scripts live only in the session
-  scratchpad
+- [x] **E2E runner harness — DONE 2026-07-29.** All eight scratchpad runners
+  promoted to a committed `e2e/` directory: shared `harness.py` (headless app
+  launch/teardown on port 8598, `FIXTURES` path), `fixtures/broken_portfolio.csv`,
+  README with run instructions + the Playwright/Streamlit lessons. Scratchpad
+  paths made repo-relative; freq-model storage TC now uses `tempfile` instead of
+  scratchpad DBs. Run manually from the repo root, not collected by pytest
+  (`testpaths = ["tests"]`). Ruff clean; all eight re-executed green 2026-07-29.
 - [x] **Data Exploration slice — DONE 2026-07-25.** New module
   `pricing_engine/exploration.py` (aggregate-only: `portfolio_frequency`,
   `summarize_portfolio`, `one_way_frequency` with quantile binning,
