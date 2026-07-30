@@ -142,10 +142,25 @@ def stepwise_selection(
     return tuple(current), pd.DataFrame(log_rows)
 
 
+def _severity_family(name: str) -> sm.families.Family:
+    # log link explicitly: statsmodels' Gamma/InverseGaussian defaults are inverse
+    # power links, but multiplicative claim-size relativities need exp(beta)
+    builders = {
+        "gamma": sm.families.Gamma,
+        "inverse_gaussian": sm.families.InverseGaussian,
+    }
+    return builders[name](link=sm.families.links.Log())
+
+
 def fit_severity_glm(
     df: pd.DataFrame,
     formula: str,
     family: str = "gamma",
 ) -> Any:
-    """Fit a severity GLM on claims with positive amounts (V2)."""
-    raise NotImplementedError
+    """Fit a per-claim severity GLM (log link, no offset) on positive amounts (V2)."""
+    if family not in SEVERITY_FAMILIES:
+        raise ValueError(
+            f"Unknown severity family '{family}' — valid: {', '.join(SEVERITY_FAMILIES)}"
+        )
+    model = smf.glm(formula, data=df, family=_severity_family(family))
+    return model.fit()

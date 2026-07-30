@@ -20,6 +20,18 @@ def poisson_portfolio() -> pd.DataFrame:
     return pd.DataFrame({"ClaimNb": claims, "Exposure": exposure, "Group": group})
 
 
+@pytest.fixture
+def gamma_claims() -> pd.DataFrame:
+    """Per-claim severity data with a real Gamma signal: group B claims ~3x group A."""
+    rng = np.random.default_rng(27)
+    n = 2_000
+    group = rng.choice(["A", "B"], size=n)
+    mean = np.where(group == "A", 1_000.0, 3_000.0)
+    shape = 2.0
+    amounts = rng.gamma(shape, mean / shape)
+    return pd.DataFrame({"ClaimAmount": amounts, "Group": group})
+
+
 GROUP_SPEC = DatasetSpec(
     name="test", label="Test", target="ClaimNb", offset="Exposure", predictors=("Group",)
 )
@@ -115,3 +127,43 @@ class TestFitFrequencyGlm:
     def test_unknown_family_raises(self, poisson_portfolio: pd.DataFrame) -> None:
         with pytest.raises(ValueError, match="poisson"):
             glm.fit_frequency_glm(poisson_portfolio, "ClaimNb ~ Group", family="gaussian")
+
+
+class TestFitSeverityGlm:
+    def test_gamma_recovers_group_effect(self, gamma_claims: pd.DataFrame) -> None:
+        model = glm.fit_severity_glm(gamma_claims, "ClaimAmount ~ Group")
+        assert model.converged
+        # log link: exp(intercept) ~ group A mean amount; exp(group B coef) ~ 3x relativity
+        params = model.params
+        assert np.exp(params["Intercept"]) == pytest.approx(1_000.0, rel=0.15)
+        assert np.exp(params["Group[T.B]"]) == pytest.approx(3.0, rel=0.15)
+
+    def test_log_link_not_statsmodels_default(self, gamma_claims: pd.DataFrame) -> None:
+        # statsmodels' Gamma default link is inverse power — the fit must use log
+        model = glm.fit_severity_glm(gamma_claims, "ClaimAmount ~ Group")
+        import statsmodels.api as sm
+
+        assert isinstance(model.model.family, sm.families.Gamma)
+        assert isinstance(model.model.family.link, sm.families.links.Log)
+
+    def test_inverse_gaussian_family(self, gamma_claims: pd.DataFrame) -> None:
+        model = glm.fit_severity_glm(gamma_claims, "ClaimAmount ~ Group", family="inverse_gaussian")
+        assert model.converged
+        import statsmodels.api as sm
+
+        assert isinstance(model.model.family, sm.families.InverseGaussian)
+        assert isinstance(model.model.family.link, sm.families.links.Log)
+
+    def test_unknown_family_raises(self, gamma_claims: pd.DataFrame) -> None:
+        with pytest.raises(ValueError, match="gamma"):
+            glm.fit_severity_glm(gamma_claims, "ClaimAmount ~ Group", family="poisson")
+
+    def test_fitted_means_match_observed_by_group(self, gamma_claims: pd.DataFrame) -> None:
+        # Gamma + log link with a saturated one-factor model reproduces group means
+        model = glm.fit_severity_glm(gamma_claims, "ClaimAmount ~ Group")
+        fitted = model.fittedvalues
+        for level in ["A", "B"]:
+            mask = gamma_claims["Group"] == level
+            assert fitted[mask].mean() == pytest.approx(
+                gamma_claims.loc[mask, "ClaimAmount"].mean(), rel=1e-6
+            )

@@ -93,10 +93,12 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   round 1, 4 fits/9s), guard + section-render UI TCs passed; full UI run
   manual/deferred (minutes by design).
 - [ ] Manual walkthrough by Markus + the deferred/manual TCs from the E2E docs
-  (selectbox/radio changes, CSV save, F5 history persistence; now also
-  severity-dataset TC10: one-way/histogram switches on the severity data,
-  bin/log on it, and the switch-back-to-frequency check). Kept in backlog
-  2026-07-29 (Markus).
+  (selectbox/radio changes, CSV save, F5 history persistence; severity-dataset
+  TC10: one-way/histogram switches on the severity data, bin/log on it, and
+  the switch-back-to-frequency check; now also severity-model TC9: Inverse
+  Gaussian via the UI — expect the friendly infeasible-fit error, reverse
+  frequency slot-swap, run-history family/offset visual check). Kept in
+  backlog 2026-07-29 (Markus).
 - [x] SQLite scope — DECIDED 2026-07-25 (decision 7 in `PROJECT.md`, storage
   section in `docs/architecture.md`): workbench state + model run history,
   never portfolio data; implemented lazily.
@@ -122,18 +124,31 @@ slices, each through the Change Validation Workflow.
   runner `e2e/e2e_severity_dataset.py` (combobox click+type+Enter automation
   worked); TC10 deferred/manual. Findings recorded: joined mean 2,265.5 (raw
   2,278.5); freq parquet sorted claims-first.
-- [ ] **Slice 2: severity model screen** — `glm.fit_severity_glm` (Gamma
-  default / Inverse Gaussian, log link explicitly — statsmodels' Gamma
-  default is inverse power; no offset) + `pages/07_Severity_Model.py`
-  mirroring screen 04 (family select, formula preview, fit, claim-size
-  relativities `exp(beta)`, plain-language aids, insignificance warning, run
-  history via same model_runs table) + reverse kind guard (severity screen
-  points frequency datasets to screen 04).
+- [x] **Slice 2: severity model screen — DONE 2026-07-30 (uncommitted at
+  save).** `glm.fit_severity_glm` (Gamma default / Inverse Gaussian, BOTH
+  with explicit log link; no offset parameter; friendly unknown-family
+  ValueError) + `pages/07_Severity_Model.py` mirroring screen 04 (family
+  select, formula preview, fit with try/except → friendly error on numerical
+  failure, claim-size relativities, plain-language aids, insignificance
+  warning + weaker-severity-signal teaching caption, shared run history; NO
+  stepwise section) + reverse kind guard. **Single active-model slot
+  implemented** (session keys `model`/`model_meta` with `kind`; screens
+  04/07 write their kind, results gated by kind; Diagnostics/Prediction read
+  the new key and show an interim guard for severity models until slice 3).
+  5 new unit tests (suite 102, 99.42% cov; `fit_severity_glm` stub line
+  removed from test_scaffold per its contract). E2E
+  `.planning/e2e-tests/severity-model.md` TC1–TC8 PASSED via committed
+  runner `e2e/e2e_severity_model.py`; TC9 deferred/manual. Real-data
+  findings: mean fitted 2,230.9 (obs 2,265.5), AIC 573,121, **only
+  BonusMalus significant (41/42 terms insignificant)**, IG fit numerically
+  infeasible on the heavy tail (now caught with a friendly error).
 - [ ] **Slice 3: kind-aware Diagnostics + Prediction** —
   `prediction.predict_severity` (expected claim amount per row, no exposure
   scaling); Diagnostics wording (observed vs predicted average claim
   amount); Prediction page severity mode (single-claim what-if without
   exposure input, batch, CSV). Engine is already offset-None-safe throughout.
+  Replaces the interim "arrives with the next slice" guards that slice 2 put
+  on pages 05/06 (they read the single `model` slot + `model_meta["kind"]`).
 - [ ] V2.x notes: generalize `stepwise_selection` beyond the frequency
   fitter; consider a log-scale/binning improvement for the heavy-tailed
   ClaimAmount histogram (first bin holds >90% — known artifact, TC4).

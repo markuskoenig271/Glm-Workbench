@@ -25,6 +25,8 @@ uv run python e2e/e2e_freq_model.py      # + UI, ~2 min (three full GLM fits)
 uv run python e2e/e2e_diag_pred.py       # + UI, ~2 min (two full GLM fits)
 uv run python e2e/e2e_stepwise.py        # + UI, ~1 min (reduced 3-predictor spec)
 uv run python e2e/e2e_stepwise_tc3b.py   # engine only, ~1 min
+uv run python e2e/e2e_severity_dataset.py # + UI, ~1 min (V2 slice 1)
+uv run python e2e/e2e_severity_model.py  # + UI, ~2 min (three Gamma fits, one IG attempt)
 ```
 
 Each script prints `... PASS` per test case and exits non-zero on the first failure.
@@ -35,8 +37,11 @@ Each script prints `... PASS` per test case and exits non-zero on the first fail
   a new Streamlit session and drops `st.session_state`.
 - `expect(...).to_be_visible()` before any `.count()` assertion on progressively
   rendered pages — counts don't auto-wait.
-- UI TCs use defaults-only widget interaction; selectbox/radio-change scenarios are
+- UI TCs use defaults-only widget interaction, plus ONE sanctioned BaseWeb
+  selectbox route proven in the severity runners: click the combobox, type a
+  distinctive fragment (e.g. `severity`), press Enter. Anything beyond that is
   deferred/manual (see the "deferred" notes in each plan).
 - Numeric truths are asserted at the engine level, not scraped from the UI.
-- `e2e_freq_model.py` appends two real runs to the history in `data/workbench.db`
-  (that behavior is under test). **Never delete `data/workbench.db`.**
+- `e2e_freq_model.py` appends two real runs and `e2e_severity_model.py` one real
+  run to the history in `data/workbench.db` (that behavior is under test).
+  **Never delete `data/workbench.db`.**

@@ -67,8 +67,6 @@ def test_stubs_fail_loudly(sample_portfolio: pd.DataFrame) -> None:
     with pytest.raises(NotImplementedError):
         data.generate_chapter27_portfolio()
     with pytest.raises(NotImplementedError):
-        glm.fit_severity_glm(sample_portfolio, "ClaimAmount ~ Region")
-    with pytest.raises(NotImplementedError):
         prediction.predict_pure_premium(None, None, sample_portfolio)
     with pytest.raises(NotImplementedError):
         diagnostics.compare_with_true_model(None, {})

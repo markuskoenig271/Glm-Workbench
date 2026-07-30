@@ -13,12 +13,19 @@ PREDICTED_COLOR = "#f58518"
 
 st.title("Diagnostics")
 
-if "freq_model" not in st.session_state:
+if "model" not in st.session_state:
     st.info("Fit a model first — go to Frequency Model.")
     st.stop()
 
-model = st.session_state["freq_model"]
-meta = st.session_state["freq_model_meta"]
+model = st.session_state["model"]
+meta = st.session_state["model_meta"]
+
+if meta["kind"] != "frequency":
+    st.info(
+        "The active model is a severity model — severity-aware diagnostics arrive "
+        "with the next slice. Fit a frequency model to use this screen."
+    )
+    st.stop()
 portfolio = st.session_state["portfolio"]
 spec = st.session_state["spec"]
 

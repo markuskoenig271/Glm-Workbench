@@ -7,11 +7,18 @@ from pricing_engine import prediction
 
 st.title("Prediction")
 
-if "freq_model" not in st.session_state:
+if "model" not in st.session_state:
     st.info("Fit a model first — go to Frequency Model.")
     st.stop()
 
-model = st.session_state["freq_model"]
+if st.session_state["model_meta"]["kind"] != "frequency":
+    st.info(
+        "The active model is a severity model — severity prediction arrives "
+        "with the next slice. Fit a frequency model to use this screen."
+    )
+    st.stop()
+
+model = st.session_state["model"]
 portfolio = st.session_state["portfolio"]
 spec = st.session_state["spec"]
 
