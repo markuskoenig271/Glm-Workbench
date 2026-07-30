@@ -81,6 +81,15 @@ bottom).
 ## Future screens (roadmap, per car-insurance.md)
 
 - **V3 — Pure Premium:** frequency × severity, variable contributions
+  (expected yearly loss = predicted frequency × predicted claim amount —
+  deterministic, no simulation needed)
+- **V3.x — Simulation:** compound Poisson Monte Carlo of yearly losses from
+  the two fitted models (see architecture.md "Modeling"). Single-profile
+  what-if or whole portfolio; yearly-loss histogram, percentile /
+  exceedance-probability table. Must carry two honest captions: claim counts
+  and sizes assumed independent given the rating factors, and the Gamma's
+  light tail understates extreme years (teaches the method, not a credible
+  1-in-200)
 - **V4 — Generic workbench:** arbitrary portfolios; Reports screen
   (HTML/PDF export, model summary)
 - **Backlog:** Chapter 27 synthetic dataset + hidden-DGM educational features

@@ -46,7 +46,7 @@ Streamlit UI (V1 pages)
     ├── Diagnostics         (kind-aware since V2)
     └── Prediction          (kind-aware since V2)
 
-    (V3+: Pure Premium, Reports)
+    (V3+: Pure Premium, Simulation (V3.x), Reports)
 
 pricing_engine/
     data.py            # import, validation, freMTPL2 loaders, dataset spec
@@ -55,6 +55,7 @@ pricing_engine/
     glm.py             # frequency (V1) + severity (V2) fitting
     prediction.py      # frequency prediction (V1), pure premium (V3)
     diagnostics.py
+    simulation.py      # (V3.x) compound Poisson Monte Carlo — yearly loss distribution
     report.py          # (V4)
 ```
 
@@ -162,7 +163,25 @@ no naive per-row rendering.
   it is a V2.x note).
 - Pure Premium (V3) — will need both models in session at once; V2 keeps the
   single active-model slot (fitting severity replaces the active frequency
-  model and vice versa), V3 splits it per kind.
+  model and vice versa), V3 splits it per kind. The **expected** yearly loss
+  needs no simulation: E[S] = λ(x) · μ(x) (predicted frequency × predicted
+  claim amount) — that IS the pure premium.
+- Aggregate loss simulation (V3.x, discussed 2026-07-30) — new module
+  `simulation.py`: compound Poisson Monte Carlo of the **yearly loss
+  distribution** (percentiles / exceedance probabilities — what the
+  deterministic pure premium cannot give). Per policy profile (or whole
+  portfolio): draw N ~ Poisson(λ(x)), then N severity draws, sum; repeat many
+  sims. The fitted Gamma GLM defines a full per-profile severity
+  distribution — mean μ(x) = exp(Xβ) plus the estimated dispersion φ
+  (statsmodels `model.scale`), i.e. Gamma(shape = 1/φ, scale = μ(x)·φ) — so
+  the engine must surface the dispersion, not just the mean.
+  Prerequisites: V2 slice 3 (`predict_severity`) and the V3 per-kind model
+  slots. Framing caveats (UI captions, not fine print): claim counts and
+  sizes assumed independent given the rating factors; the Gamma is much
+  lighter-tailed than the empirical severity (max ≈ 4.08m vs median 1,172),
+  so simulated extreme years understate tail risk — the screen teaches the
+  *method*, it does not produce a credible 1-in-200 (a spliced Pareto tail
+  is a further-future idea).
 - (Deferred to V4, with ML challengers) regularised fits — trade-off: no
   classical inference (std errors/p-values/CIs) on penalised estimates
 
@@ -204,8 +223,9 @@ Delivered in three slices, each through the Change Validation Workflow:
 ## Version Roadmap (per car-insurance.md)
 
 1. **V1** — Frequency GLM (Chapter 27 example) — **complete 2026-07-25**
-2. **V2** — Severity GLM (Gamma) — **in progress**
+2. **V2** — Severity GLM (Gamma) — **in progress** (slices 1–2 done, slice 3 open)
 3. **V3** — Pure Premium (Frequency × Severity)
+   - **V3.x** — Aggregate loss simulation (compound Poisson Monte Carlo, see Modeling)
 4. **V4** — Generic pricing workbench for arbitrary portfolios
 
 ## Future Ideas

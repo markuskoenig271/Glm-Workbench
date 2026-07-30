@@ -155,6 +155,10 @@ slices, each through the Change Validation Workflow.
 
 ## Backlog
 
+- [ ] **Decide fate of `Shiny-to-React-R-Backend-Migration.docx`** (repo root,
+  untracked, created 2026-07-30): interview material, not project code —
+  Markus to say commit / gitignore / keep local. Source outline lives in the
+  session transcript only.
 - [ ] **Chapter 27 synthetic dataset generator** (`generate_chapter27_portfolio`,
   ~20k policies) + the educational features that need its hidden data-generating
   model: `compare_with_true_model` diagnostic, Dummy1/Dummy2 insignificance demo.
@@ -172,6 +176,18 @@ slices, each through the Change Validation Workflow.
   CI-whisker chart and significance highlighting don't apply). Typical
   actuarial practice keeps pricing GLMs unpenalised for interpretability —
   decide framing (educational comparison feature vs. modelling tool).
+- [ ] **Aggregate loss simulation (V3.x) — compound Poisson Monte Carlo**
+  (discussed with Markus 2026-07-30; design written into
+  `docs/architecture.md` "Modeling" + `docs/ui_screens.md` roadmap). Yearly
+  loss DISTRIBUTION (percentiles, exceedance) on top of the two fitted
+  models: N ~ Poisson(λ(x)), N Gamma severity draws per profile
+  (mean exp(Xβ) + dispersion φ = `model.scale` → shape 1/φ, scale μφ), sum,
+  repeat. Engine must surface the Gamma dispersion (today only the mean).
+  Prerequisites: V2 slice 3 (`predict_severity`) + V3 per-kind model slots.
+  Honest-caption requirements: freq⊥sev independence assumption; Gamma
+  light tail understates extreme years (method demo, not a 1-in-200);
+  spliced Pareto tail = further-future idea. Note: the EXPECTED yearly loss
+  needs no simulation — λ·μ is the V3 pure premium itself.
 - [ ] V2+ roadmap items (severity, pure premium, generic workbench, reports) —
   tracked in `PROJECT.md` / `docs/architecture.md`
 
