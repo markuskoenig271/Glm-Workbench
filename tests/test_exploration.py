@@ -114,3 +114,22 @@ class TestCorrelationMatrix:
         assert list(corr.columns) == expected
         assert list(corr.index) == expected
         assert all(corr.loc[c, c] == pytest.approx(1.0) for c in expected)
+
+
+SEV_SPEC = DatasetSpec(
+    name="s",
+    label="S",
+    target="ClaimAmount",
+    offset=None,
+    predictors=("Area",),
+    kind="severity",
+)
+
+
+class TestSeverityAverages:
+    def test_one_way_is_average_claim_amount_without_offset(self) -> None:
+        df = pd.DataFrame({"ClaimAmount": [100.0, 300.0, 500.0], "Area": ["A", "A", "B"]})
+        ow = exploration.one_way_frequency(df, SEV_SPEC, "Area")
+        # with no offset the "frequency" column divides by row count: per-claim average
+        assert list(ow[ow["Area"] == "A"]["frequency"]) == [200.0]
+        assert list(ow[ow["Area"] == "B"]["frequency"]) == [500.0]

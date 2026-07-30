@@ -15,6 +15,13 @@ if "portfolio" not in st.session_state:
 portfolio = st.session_state["portfolio"]
 spec = st.session_state["spec"]
 
+if spec.kind != "frequency":
+    st.info(
+        "The active dataset is a severity dataset (claim amounts) — use the "
+        "Severity Model screen to fit it."
+    )
+    st.stop()
+
 st.subheader("Model setup")
 family = st.selectbox(
     "Distribution",

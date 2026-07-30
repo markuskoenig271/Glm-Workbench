@@ -2,8 +2,10 @@
 
 **Version 1 scope:** the Chapter 27 car-insurance frequency workflow — see
 [car-insurance.md](car-insurance.md) — on the **real freMTPL2 dataset** (the
-synthetic Chapter 27 dataset is backlogged). Seven screens; severity, pure
-premium, and reporting screens arrive with later versions (roadmap at the bottom).
+synthetic Chapter 27 dataset is backlogged). **V2 (approved 2026-07-29)** adds
+the Severity Model screen (8) and makes Diagnostics and Prediction kind-aware;
+pure premium and reporting screens arrive with later versions (roadmap at the
+bottom).
 
 ## 1. Home
 - Load the built-in dataset: **freMTPL2** (real French motor TPL, 678k policies);
@@ -48,6 +50,8 @@ premium, and reporting screens arrive with later versions (roadmap at the bottom
 - Deviance and Pearson residual plots
 - Observed vs Predicted
 - Model summary
+- (V2) kind-aware wording: for a severity model the calibration chart reads
+  "observed vs predicted average claim amount"
 - (Backlog, with the synthetic dataset) comparison of estimated coefficients
   with the hidden data-generating model
 
@@ -55,13 +59,27 @@ premium, and reporting screens arrive with later versions (roadmap at the bottom
 - Single policy expected claim frequency
 - Batch prediction
 - Export CSV
+- (V2) kind-aware: for a severity model the what-if is a single **claim**
+  (no exposure input) predicting expected claim amount; batch predicts per
+  claim row
+
+## 8. Severity Model (V2)
+- Loads via Data Import like any dataset: built-in **freMTPL2 severity**
+  (26.6k claims joined with the nine rating factors, per-claim grain)
+- Family selection: Gamma (default) / Inverse Gaussian — log link, no offset
+- Formula preview from the shared spec (same Feature Engineering screen applies)
+- Fit; coefficient table with p-values, deviance, AIC
+- Educational aids: claim-size relativities (`exp(beta)` = multiplicative
+  effect on expected claim amount), plain-language explanations, highlighting
+  of insignificant variables
+- Run history (same model_runs table; family distinguishes runs)
+- Kind guards: the Frequency Model screen points severity datasets here, and
+  vice versa
 
 ---
 
 ## Future screens (roadmap, per car-insurance.md)
 
-- **V2 — Severity Model:** distribution selection (Gamma / Inverse Gaussian),
-  formula editor, fit, diagnostics (freMTPL2sev is already downloaded)
 - **V3 — Pure Premium:** frequency × severity, variable contributions
 - **V4 — Generic workbench:** arbitrary portfolios; Reports screen
   (HTML/PDF export, model summary)

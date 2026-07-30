@@ -43,6 +43,7 @@ FREMTPL2_FREQ_URL = "https://data.openml.org/datasets/0004/41214/dataset_41214.p
 FREMTPL2_SEV_URL = "https://data.openml.org/datasets/0004/41215/dataset_41215.pq"
 FREMTPL2_TARGET_COLUMN = "ClaimNb"
 FREMTPL2_OFFSET_COLUMN = "Exposure"
+FREMTPL2_SEV_TARGET_COLUMN = "ClaimAmount"
 FREMTPL2_PREDICTOR_COLUMNS = [
     "Area",  # density band A–F
     "VehPower",
@@ -60,13 +61,19 @@ FREMTPL2_PREDICTOR_COLUMNS = [
 
 @dataclass(frozen=True)
 class DatasetSpec:
-    """Generic description of a modelling dataset: what to predict, with what."""
+    """Generic description of a modelling dataset: what to predict, with what.
+
+    `kind` ("frequency" or "severity") drives which model screen fits the
+    dataset, UI wording, and validation strictness — see docs/architecture.md
+    "Spec kind (V2)".
+    """
 
     name: str
     label: str
     target: str
     offset: str | None
     predictors: tuple[str, ...]
+    kind: str = "frequency"
 
     @property
     def required_columns(self) -> tuple[str, ...]:
@@ -85,8 +92,18 @@ FREMTPL2_FREQ_SPEC = DatasetSpec(
     predictors=tuple(FREMTPL2_PREDICTOR_COLUMNS),
 )
 
+FREMTPL2_SEV_SPEC = DatasetSpec(
+    name="fremtpl2_sev",
+    label="freMTPL2 — French motor TPL, severity (26.4k claims)",
+    target=FREMTPL2_SEV_TARGET_COLUMN,
+    offset=None,
+    predictors=tuple(FREMTPL2_PREDICTOR_COLUMNS),
+    kind="severity",
+)
+
 DATASET_REGISTRY: dict[str, DatasetSpec] = {
     FREMTPL2_FREQ_SPEC.name: FREMTPL2_FREQ_SPEC,
+    FREMTPL2_SEV_SPEC.name: FREMTPL2_SEV_SPEC,
 }
 
 
@@ -137,8 +154,25 @@ def load_fremtpl2_sev(path: str | Path | None = None) -> pd.DataFrame:
     )
 
 
+def load_fremtpl2_sev_joined(
+    freq_path: str | Path | None = None, sev_path: str | Path | None = None
+) -> pd.DataFrame:
+    """The V2 severity modelling table: one row per claim with its rating factors.
+
+    Inner-joins each severity row (IDpol, ClaimAmount) with the frequency
+    table's predictors on IDpol; orphan claims (no matching policy — a known
+    freMTPL2 quirk, ~0.7%) are dropped. ClaimNb/Exposure are not carried over:
+    severity is modelled per claim, without an offset.
+    """
+    sev = load_fremtpl2_sev(sev_path)
+    freq = load_fremtpl2_freq(freq_path)
+    factors = freq[["IDpol", *FREMTPL2_PREDICTOR_COLUMNS]]
+    return sev.merge(factors, on="IDpol", how="inner")
+
+
 _LOADERS: dict[str, Callable[[], pd.DataFrame]] = {
     "fremtpl2_freq": load_fremtpl2_freq,
+    "fremtpl2_sev": load_fremtpl2_sev_joined,
 }
 
 # --- Validation -------------------------------------------------------------
@@ -159,8 +193,17 @@ def validate_portfolio(df: pd.DataFrame, spec: DatasetSpec) -> list[str]:
 
     if spec.target in df.columns:
         target = df[spec.target]
+        target_meaning = "claim amounts" if spec.kind == "severity" else "claim counts"
         if not pd.api.types.is_numeric_dtype(target):
-            findings.append(f"Target '{spec.target}' must be numeric (claim counts)")
+            findings.append(f"Target '{spec.target}' must be numeric ({target_meaning})")
+        elif spec.kind == "severity":
+            # Gamma/Inverse Gaussian require strictly positive amounts
+            non_positive = int((target <= 0).sum())
+            if non_positive:
+                findings.append(
+                    f"Target '{spec.target}' has {non_positive} non-positive value(s) — "
+                    "claim amounts must be positive"
+                )
         else:
             negative = int((target < 0).sum())
             if negative:

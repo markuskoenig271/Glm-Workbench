@@ -42,6 +42,17 @@ def fremtpl2_sample() -> pd.DataFrame:
     )
 
 
+@pytest.fixture
+def fremtpl2_sev_sample() -> pd.DataFrame:
+    """A tiny frame in the freMTPL2sev schema: policy 1 claims twice, 99 is an orphan."""
+    return pd.DataFrame(
+        {
+            "IDpol": [1, 1, 5, 99],
+            "ClaimAmount": [1204.00, 1128.12, 500.0, 999.0],
+        }
+    )
+
+
 GROUP_SPEC = DatasetSpec(
     name="test_group",
     label="Test group portfolio",

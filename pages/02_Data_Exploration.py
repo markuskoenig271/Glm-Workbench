@@ -17,25 +17,35 @@ if "portfolio" not in st.session_state:
 portfolio = st.session_state["portfolio"]
 spec = st.session_state["spec"]
 
+severity = spec.kind == "severity"
+
 frequency = exploration.portfolio_frequency(portfolio, spec)
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Policies", f"{len(portfolio):,}")
-if spec.offset is not None:
-    col2.metric("Total exposure", f"{portfolio[spec.offset].sum():,.0f}")
+if severity:
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Claims", f"{len(portfolio):,}")
+    col2.metric("Total claim amount", f"{portfolio[spec.target].sum():,.0f}")
+    col3.metric("Average claim amount", f"{frequency:,.0f}")
+    st.caption("Average claim amount = total claim amount / number of claims (severity).")
 else:
-    col2.metric("Total exposure", "n/a")
-col3.metric("Total claims", f"{int(portfolio[spec.target].sum()):,}")
-col4.metric("Claim frequency", f"{frequency:.4f}")
-st.caption(
-    "Claim frequency = total claims / total exposure (claims per policy-year)."
-    if spec.offset is not None
-    else "Claim frequency = total claims / policies (no exposure offset in this dataset)."
-)
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Policies", f"{len(portfolio):,}")
+    if spec.offset is not None:
+        col2.metric("Total exposure", f"{portfolio[spec.offset].sum():,.0f}")
+    else:
+        col2.metric("Total exposure", "n/a")
+    col3.metric("Total claims", f"{int(portfolio[spec.target].sum()):,}")
+    col4.metric("Claim frequency", f"{frequency:.4f}")
+    st.caption(
+        "Claim frequency = total claims / total exposure (claims per policy-year)."
+        if spec.offset is not None
+        else "Claim frequency = total claims / policies (no exposure offset in this dataset)."
+    )
 
 st.subheader("Summary statistics")
 st.dataframe(exploration.summarize_portfolio(portfolio, spec))
 
-st.subheader("One-way claim frequency")
+one_way_title = "Average claim amount" if severity else "Claim frequency"
+st.subheader(f"One-way {one_way_title.lower()}")
 predictor = st.selectbox("Predictor", list(spec.predictors))
 one_way = exploration.one_way_frequency(portfolio, spec, predictor)
 one_way_chart = (
@@ -43,7 +53,7 @@ one_way_chart = (
     .mark_bar(color=ACCENT)
     .encode(
         x=alt.X(predictor, type="nominal", sort=None, title=predictor),
-        y=alt.Y("frequency", type="quantitative", title="Claim frequency"),
+        y=alt.Y("frequency", type="quantitative", title=one_way_title),
         tooltip=[
             alt.Tooltip(predictor, type="nominal"),
             alt.Tooltip("policies", type="quantitative", format=","),
@@ -53,7 +63,7 @@ one_way_chart = (
                 if spec.offset is not None
                 else []
             ),
-            alt.Tooltip("frequency", type="quantitative", format=".4f"),
+            alt.Tooltip("frequency", type="quantitative", format=",.0f" if severity else ".4f"),
         ],
     )
 )
@@ -69,7 +79,7 @@ hist_chart = (
     .mark_bar(color=ACCENT)
     .encode(
         x=alt.X(column, type="nominal", sort=None, title=column),
-        y=alt.Y("count", type="quantitative", title="Policies"),
+        y=alt.Y("count", type="quantitative", title="Claims" if severity else "Policies"),
         tooltip=[
             alt.Tooltip(column, type="nominal"),
             alt.Tooltip("count", type="quantitative", format=","),

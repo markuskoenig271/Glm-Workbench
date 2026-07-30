@@ -41,7 +41,7 @@ package; Streamlit is only the front-end.
 - Local single-user operation (SQLite storage)
 
 **Later versions (roadmap)**
-- V2 — Severity GLM (Gamma / Inverse Gaussian)
+- V2 — Severity GLM (Gamma / Inverse Gaussian) — **in progress, decision 8**
 - V3 — Pure Premium (frequency × severity), variable contributions
 - V4 — Generic pricing workbench for arbitrary portfolios; reports (HTML/PDF)
 - Negative Binomial frequency, variable selection, cross-validation
@@ -93,6 +93,16 @@ for all computation. Details: `docs/architecture.md`.
   Implemented lazily: tables arrive with their first consumer (model run history
   with the Frequency Model slice). Until then, in-session state only — a browser
   refresh drops the loaded dataset (known Streamlit behavior).
+- **Decision 8 — V2 severity design (2026-07-29):** per-claim severity GLM
+  (Gamma default / Inverse Gaussian, log link, no offset) on the freMTPL2
+  severity table inner-joined with the frequency table's rating factors,
+  registered as a second built-in dataset (`fremtpl2_sev`) so the existing
+  Import/Exploration/Feature-Engineering screens work unchanged. `DatasetSpec`
+  gains a `kind` field ("frequency"/"severity") driving screen guards, UI
+  wording, and validation (severity targets strictly positive). Full-workflow
+  scope: new Severity Model screen plus kind-aware Diagnostics and Prediction.
+  Chosen over per-policy weighted averages (textbook per-claim setup is the
+  educational standard) and over a fit-screen-only scope.
 
 ## Working conventions
 

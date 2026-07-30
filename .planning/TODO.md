@@ -92,14 +92,51 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   reduced 3-predictor spec — all three kept (all genuine effects; stops after
   round 1, 4 fits/9s), guard + section-render UI TCs passed; full UI run
   manual/deferred (minutes by design).
-- [ ] Manual walkthrough by Markus + the deferred/manual TCs from the five
-  E2E docs (selectbox/radio changes, CSV save, F5 history persistence)
+- [ ] Manual walkthrough by Markus + the deferred/manual TCs from the E2E docs
+  (selectbox/radio changes, CSV save, F5 history persistence; now also
+  severity-dataset TC10: one-way/histogram switches on the severity data,
+  bin/log on it, and the switch-back-to-frequency check). Kept in backlog
+  2026-07-29 (Markus).
 - [x] SQLite scope — DECIDED 2026-07-25 (decision 7 in `PROJECT.md`, storage
   section in `docs/architecture.md`): workbench state + model run history,
   never portfolio data; implemented lazily.
 - [x] SQLite schema + `storage` module — DONE 2026-07-25 with the Frequency
   Model slice (model_runs table; workbench-state/"projects" tables follow when
   a consumer needs them)
+
+## V2 — severity workbench (decision 8 in PROJECT.md; design in docs/architecture.md "V2 — Severity design")
+
+Approved 2026-07-29 (Markus): per-claim grain, full-workflow scope. Three
+slices, each through the Change Validation Workflow.
+
+- [x] **Slice 1: severity dataset — DONE 2026-07-29 (uncommitted at save).**
+  `DatasetSpec.kind` ("frequency" default / "severity"); registered dataset
+  `fremtpl2_sev` (`load_fremtpl2_sev_joined`: inner join sev × freq rating
+  factors on IDpol → 26,444 rows × 11 cols, 195 orphans dropped); kind-aware
+  `validate_portfolio` (severity target strictly positive, "claim amounts"
+  wording); kind-aware Data Exploration (Claims / Total claim amount /
+  Average claim amount 2,266; one-way average claim amount); Frequency Model
+  kind guard. Feature Engineering + Data Import needed zero changes
+  (spec-driven). 10 new unit tests (suite 97, 99.41% cov). E2E
+  `.planning/e2e-tests/severity-dataset.md` TC1–TC9 PASSED via committed
+  runner `e2e/e2e_severity_dataset.py` (combobox click+type+Enter automation
+  worked); TC10 deferred/manual. Findings recorded: joined mean 2,265.5 (raw
+  2,278.5); freq parquet sorted claims-first.
+- [ ] **Slice 2: severity model screen** — `glm.fit_severity_glm` (Gamma
+  default / Inverse Gaussian, log link explicitly — statsmodels' Gamma
+  default is inverse power; no offset) + `pages/07_Severity_Model.py`
+  mirroring screen 04 (family select, formula preview, fit, claim-size
+  relativities `exp(beta)`, plain-language aids, insignificance warning, run
+  history via same model_runs table) + reverse kind guard (severity screen
+  points frequency datasets to screen 04).
+- [ ] **Slice 3: kind-aware Diagnostics + Prediction** —
+  `prediction.predict_severity` (expected claim amount per row, no exposure
+  scaling); Diagnostics wording (observed vs predicted average claim
+  amount); Prediction page severity mode (single-claim what-if without
+  exposure input, batch, CSV). Engine is already offset-None-safe throughout.
+- [ ] V2.x notes: generalize `stepwise_selection` beyond the frequency
+  fitter; consider a log-scale/binning improvement for the heavy-tailed
+  ClaimAmount histogram (first bin holds >90% — known artifact, TC4).
 
 ## Backlog
 
@@ -110,7 +147,7 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   in `pricing_engine/`). Deferred 2026-07-25 in favour of real-data-first.
 - [ ] **Regularisation (lasso/ridge/elastic net) — REDISCUSS with Markus**
   (2026-07-25: he wants to revisit this and eventually put it in somehow, ahead
-  of the original V4 deferral). Sketch when discussing: a "Regularisation"
+  of the original V4 deferral; 2026-07-29: confirmed keep in backlog for now). Sketch when discussing: a "Regularisation"
   option on the Frequency Model page (none default / lasso / ridge / elastic
   net + alpha input) via statsmodels `fit_regularized`; lasso's zeroed
   coefficients would complement stepwise as a second selection lens. The
