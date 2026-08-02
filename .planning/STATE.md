@@ -5,100 +5,97 @@ Read this + `TODO.md` at the start of every session. See `PROJECT.md` for the sp
 
 ---
 
-## Last updated: 2026-07-30 (session 3 — slices 1+2 committed, V3.x simulation on roadmap, interview doc)
+## Last updated: 2026-08-02 (session 4 — R Shiny EUC feasibility study, verified cross-laptop)
 
 ## Headline
 
-V2 slice 1 committed (`3518e96`) and **slice 2 (Severity Model screen) built
-through the full Change Validation Workflow, validated, committed + pushed
-(`43ca260`)**. A roadmap discussion added **V3.x aggregate loss simulation**
-(compound Poisson Monte Carlo) to docs/architecture.md, docs/ui_screens.md
-and TODO.md — those planning/doc updates are **uncommitted** at save
-(suggested: `docs: session save + V3.x aggregate loss simulation on the
-roadmap`). Side quest: an interview prep doc
-`Shiny-to-React-R-Backend-Migration.docx` sits untracked in the repo root
-awaiting Markus' commit/gitignore/local call. Next dev work: **V2 slice 3**
-(Markus explicitly said "do not start yet with V3" — slice 3 finishes V2 and
-was not vetoed, but confirm before starting).
+Side-track session, no Streamlit/Python changes: built a complete **R Shiny
+tech feasibility study** in a new top-level `R/` folder (Markus' request,
+ahead of V2 slice 3). Template app mirrors all 7 Streamlit pages with the
+standard Shiny module pattern; Data Import + Feature Engineering
+implemented (tidyverse/pipe style), model pages are placeholders. Three
+escalating EUC delivery variants all work: browser launcher, Edge
+app-mode launcher, and an **Electron desktop exe that self-manages its R
+packages** (end-user contract: install R once, the exe does the rest).
+**Verified on Markus' second laptop.** Everything in `R/` is **untracked/
+uncommitted**, as are the TODO/STATE updates. Next dev work on the main
+app remains **V2 slice 3** (confirm with Markus before starting).
 
 ## What was done this session
 
-- **Slice 1 committed** `3518e96` (severity dataset) and pushed.
-- **Slice 2 through the full Change Validation Workflow:** BA-Agent report
-  (scenarios S1–S8, 12 traps) → Test Agent wrote
-  `.planning/e2e-tests/severity-model.md` (9 TCs) → TDD → execution via the
-  committed runner `e2e/e2e_severity_model.py` (TC1–TC8 PASSED, TC9
-  deferred/manual) → **committed `43ca260` + pushed**. Suite 102 passed /
-  99.42% coverage, ruff + mypy clean; slice-1 runner re-executed green.
-  Engine: `glm.fit_severity_glm` (Gamma default / Inverse Gaussian, BOTH
-  explicit `links.Log()`, no offset, friendly unknown-family ValueError; 5
-  new unit tests; stub line removed from test_scaffold per its contract —
-  the stale stub also caused a pytest INTERNALERROR via patsy frame
-  introspection). **Single active-model slot implemented**: session keys
-  `model`/`model_meta` with `kind`; screens 04/07 gate results on kind;
-  pages 05/06 show interim "arrives with the next slice" guards (slice 3
-  replaces them). UI `pages/07_Severity_Model.py` mirrors screen 04 (no
-  stepwise section; reverse kind guard; fit in try/except → friendly error,
-  added when E2E proved IG raises on the real data).
-- **App started for Markus** (port 8501, background task in this session —
-  will not survive the session; restart with
-  `uv run streamlit run app.py`). Walked him through the kind guard: load
-  the severity dataset via Data Import selectbox to use screen 07.
-- **Roadmap discussion (compound Poisson / yearly losses):** missing = V3
-  per-kind slots + slice-3 `predict_severity` + NEW simulation machinery.
-  λ·μ IS the V3 pure premium (no simulation); simulation adds the
-  distribution and needs the Gamma dispersion (`model.scale`) surfaced;
-  independence + light-tail caveats must be UI captions. **Written into
-  docs/architecture.md (Modeling + module diagram + roadmap),
-  docs/ui_screens.md (V3.x Simulation screen), TODO.md — at Markus'
-  request, uncommitted at save.**
-- **Interview side quest (not project code):** discussed R Shiny →
-  React/Angular SPA + R(plumber) backend target architecture and
-  strangler-fig migration path; delivered
-  `Shiny-to-React-R-Backend-Migration.docx` to the repo root (python-docx
-  via ephemeral `uv run --with` — project deps untouched). Untracked;
-  TODO item added for its fate.
+- **R/ template app** (R 4.2.1 found at `C:\Program Files\R`, no RStudio
+  needed): `app.R` (bslib `page_navbar`) + `core/datasets.R` (registry,
+  nanoparquet parquet loaders incl. severity inner join, kind-aware
+  `validate_portfolio`) + `core/preprocessing.R` (cap/bin/log) +
+  `modules/` (`NS()` + `moduleServer` per page; shared `reactiveValues`
+  state as the `st.session_state` analogue; placeholder module reused for
+  pages 02/04–07). Headless checks (scratchpad `test_core.R`, 12/12 PASS)
+  reproduce the Python facts: freq 678,013 rows, sev join 26,444 rows,
+  mean claim 2,265.5.
+- **Converted to tidyverse/pipe style** at Markus' request: native `|>`,
+  dplyr verbs, `"{col}_band" :=` dynamic mutate, tidyr `pivot_longer`
+  validation report, tibbles, readr CSV upload. All deps were already in
+  his user library (dplyr 1.1.4 etc.); only **nanoparquet** was newly
+  installed (user lib, compiled via his Rtools42).
+- **Launchers:** `run_app.bat` (default browser tab) and
+  `run_app_desktop.bat` (Edge/Chrome `--app=` mode on port 8613, native-
+  window feel, closing the window kills the server via
+  Get-NetTCPConnection→Stop-Process; verified headlessly).
+- **Electron wrapper `R/desktop/`** (Node 24 was present): `main.js`
+  spawns Rscript, parses Shiny's random "Listening on" port, native
+  window, `taskkill /t` cleanup. **Self-managing per Markus' requirement:**
+  preflight-checks 9 required packages, auto-installs missing ones into
+  `R_LIBS_USER` with a live-log first-run window (resumes if interrupted);
+  R-not-found and setup-failure show copy-pasteable self-help HTML pages.
+  freMTPL2 parquet bundled (built-in datasets work on target machines).
+  Builds via electron-builder: **portable `GLM Workbench 0.1.0.exe`
+  (74.8 MB) + NSIS `GLM Workbench Setup 0.1.0.exe`** in `R/desktop/dist/`.
+  Smoke tests all green (dev, packaged, and auto-install E2E via a
+  junction-based scratch `R_LIBS_USER` with tibble removed — real library
+  untouched). **Markus confirmed the portable exe works on his other
+  laptop.**
+- Feasibility Q&A captured in `R/README.md`: no RStudio needed; no true
+  compiled .exe exists (options ranked: launcher / R-Portable /
+  Electron / RInno-legacy / shinylive-WASM); winCodeSign build gotcha
+  (extract manually without Dev Mode); golem/package conversion path.
+- Memory saved: Markus' former-company background (golem-style Shiny-as-
+  package, roxygen/DESCRIPTION/Rtools, Docker on OpenShift).
 
-## Key real-data facts learned (severity model)
+## Machine facts learned (dev laptop)
 
-- Gamma/log fit on 26,444 claims: **AIC 573,121**, mean fitted **2,230.9**
-  vs observed 2,265.5 (−1.5%, within the ±5% calibration bound).
-- **Only BonusMalus is significant — 41 of 42 non-intercept terms
-  insignificant** (weak-severity-signal teaching moment; exactly one
-  strongest-effects bullet renders).
-- **Inverse Gaussian is numerically infeasible on the real heavy tail**
-  (`ValueError: … estimation infeasible`) — UI catches it, suggests Gamma;
-  manual TC9 should expect that message.
-- Run 12 appended to data/workbench.db by the TC6 UI fit.
+- R 4.2.1 (`C:\Program Files\R\R-4.2.1`, registry key present, not on
+  PATH), Rtools42 present, tidyverse packages built under 4.2.3 (harmless
+  warnings). Edge at `C:\Program Files (x86)\Microsoft\Edge`. Node 24 /
+  npm 11. CRAN 4.2 binaries are frozen → nanoparquet compiles from source
+  on 4.2 (why current-R advice is in the exe's failure page).
 
 ## Working agreements / lessons (keep honoring these)
 
-- Change Validation Workflow every slice: BA/Test agent writes
-  `.planning/e2e-tests/<slice>.md`, I execute + record Results. TDD first.
+- Change Validation Workflow every slice on the MAIN app. The R/ spike
+  deliberately ran lighter (headless core checks + smoke tests instead of
+  BA/Test-agent E2E docs) — it is a feasibility template, not product code.
+  If R/ graduates, put it under the full workflow.
 - Commits only when Markus says so; conventional commits, no Co-Authored-By.
-- E2E runners live in committed `e2e/` (README has the Playwright lessons).
-- Never delete data/workbench.db.
+- E2E runners live in committed `e2e/`; never delete data/workbench.db.
 
 ## Open / next steps
 
-1. **Commit the planning/docs updates** when Markus says so (STATE, TODO,
-   architecture.md, ui_screens.md — suggested message above; the .docx is a
-   separate decision, see TODO backlog).
-2. **V2 slice 3 — kind-aware Diagnostics + Prediction:**
-   `prediction.predict_severity`, severity wording on Diagnostics, severity
-   mode on Prediction; replaces the interim guards on pages 05/06 (details
-   in TODO). Finishes V2. (Confirm start with Markus — his "not V3 yet" was
-   about V3, but he then pivoted to interview prep.)
-3. Then **V3 — Pure Premium** (per-kind slots, λ·μ) and **V3.x aggregate
-   loss simulation** (backlog; design in docs/architecture.md "Modeling").
-4. Backlog: manual walkthrough (incl. severity-model TC9); regularisation
-   rediscussion; .docx fate.
+1. **Commit decisions:** `R/` folder (fully untracked; node_modules/dist/
+   r-portable already gitignored via `R/desktop/.gitignore`), the
+   TODO/STATE updates, and the still-untracked interview .docx.
+2. **V2 slice 3 — kind-aware Diagnostics + Prediction** (finishes V2;
+   details in TODO). Still the next main-app work; confirm start.
+3. **R feasibility follow-ups** (TODO): icon, renv pinning, R-Portable
+   bundle, model screens in R, golem conversion if server-side.
+4. Then V3 pure premium, V3.x simulation; backlog unchanged
+   (regularisation rediscussion, synthetic generator, manual walkthrough).
 
 ## Architecture drift check (per CLAUDE.md save protocol)
 
-No drift. Slice 2 code matches the approved V2 design (committed with it in
-`43ca260`). The V3.x simulation additions to docs/architecture.md and
-docs/ui_screens.md were made explicitly at Markus' request (forward-looking
-approved design, tracked in TODO) — not silent drift. Interim guards on
-pages 05/06 remain the designed slice-2→3 boundary state. The interview
-.docx is not a design doc and does not touch the architecture baseline.
+No drift in the approved design docs: nothing in the Streamlit app,
+`pricing_engine/`, or the data layer changed this session.
+`docs/architecture.md` intentionally does not cover the `R/` folder — it
+is an experimental feasibility spike outside the product architecture,
+tracked in TODO ("Tech feasibility — R Shiny EUC app"). If the R app is
+ever promoted beyond a spike, it needs its own design doc under `docs/`
+(flagged in the TODO follow-ups).

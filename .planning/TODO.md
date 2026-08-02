@@ -153,6 +153,69 @@ slices, each through the Change Validation Workflow.
   fitter; consider a log-scale/binning improvement for the heavy-tailed
   ClaimAmount histogram (first bin holds >90% — known artifact, TC4).
 
+## Tech feasibility — R Shiny EUC app (started 2026-08-02)
+
+- [x] **R Shiny template app — DONE 2026-08-02 (uncommitted).** `R/` folder
+  mirroring all 7 Streamlit pages with the standard Shiny module pattern
+  (`NS()` + `moduleServer()`, one module per page, shared `reactiveValues`
+  state as the `st.session_state` analogue). Implemented per feasibility
+  scope: Data Import (registry datasets via `nanoparquet` parquet loaders
+  incl. the severity inner join, CSV upload with column mapping, kind-aware
+  `validate_portfolio`) + Feature Engineering (cap/bin/log, spec-predictor
+  append); pages 02, 04–07 are namespaced placeholders. Headless core checks
+  reproduce the Python facts (freq 678,013 rows; sev join 26,444 rows, mean
+  2,265.5); app smoke-tested on R 4.2.1 (HTTP 200, all tabs render).
+  `R/run_app.bat` = EUC launcher (registry lookup → Program Files fallback);
+  `R/README.md` documents the executable/packaging findings (no true .exe;
+  R-Portable bundle recommended). New R user-library dep: `nanoparquet`.
+  **Converted to tidyverse/pipe style 2026-08-02** (native `|>`, dplyr verbs,
+  dynamic `"{col}_band" :=` mutate, tidyr pivot in validation, tibbles,
+  readr CSV upload; deps dplyr/tidyr/purrr/readr/tibble were already
+  installed). Core checks re-passed 12/12, app smoke re-passed.
+  **Second launcher added 2026-08-02:** `R/run_app_desktop.bat` runs the
+  server headless on port 8613 and opens Edge/Chrome app mode (`--app=`,
+  native-window look); closing the window kills the server via
+  Get-NetTCPConnection on the port (kill logic verified headlessly; the
+  actual Edge window is Markus' manual check).
+  **Electron wrapper added 2026-08-02** (`R/desktop/`): main.js spawns the R
+  server (R lookup: bundled r-portable → env var → registry → Program
+  Files), parses Shiny's random "Listening on" port, native BrowserWindow,
+  taskkill /t on close; electron-builder targets portable .exe + NSIS
+  installer, Shiny sources bundled via extraResources (R itself NOT bundled
+  unless r-portable/ is dropped in). node_modules/dist/r-portable
+  gitignored. **Built + verified 2026-08-02:** dev smoke (npm start) and
+  packaged smoke both PASS (exit 0, no orphan Rscript); artifacts in
+  `R/desktop/dist/`: portable `GLM Workbench 0.1.0.exe` (70.8 MB) + NSIS
+  `GLM Workbench Setup 0.1.0.exe` (71 MB). Build gotcha documented: the
+  winCodeSign cache had to be extracted manually (7za, symlink errors on
+  darwin dylibs are ignorable) because Windows Developer Mode is off.
+  Polish follow-ups: custom icon (default Electron icon used), decide
+  whether to bundle R-Portable for zero-install.
+  **Self-managing exe 2026-08-02** (after Markus' other-laptop test hit "R
+  not found"): end-user contract is now "install R once, the exe manages
+  the rest" — main.js preflight-checks the 9 required packages and
+  auto-installs missing ones into R_LIBS_USER (first-run progress window
+  with live log, resumes on rerun); R-not-found and setup-failure cases
+  show copy-pasteable self-help HTML pages (links open externally);
+  freMTPL2 parquet now bundled via extraResources so built-in datasets
+  work on target machines; r-portable is also searched next to the
+  portable exe (PORTABLE_EXECUTABLE_DIR). Auto-install flow E2E-tested via
+  junction-based scratch R_LIBS_USER with tibble removed (installed,
+  app booted, SMOKE_OK; real library untouched).
+- [x] **Cross-machine verification — DONE 2026-08-02.** Markus copied the
+  portable exe to his other laptop: first hit "R not found" (old dialog),
+  then after the self-managing rebuild **confirmed it works there** (R
+  installed by him once; packages auto-installed by the exe; bundled
+  built-in datasets load).
+- [ ] Feasibility follow-ups when Markus decides: custom app icon; `renv`
+  (or DESCRIPTION-style) version pinning before wider sharing; bundle
+  R-Portable for true zero-install (lookup order already prefers it);
+  whether to extend the template to the model screens (`glm()`
+  Poisson/Gamma equivalents); whether `R/` gets committed (currently fully
+  untracked); if it ever goes server-side, convert to golem/package
+  structure (modules are already golem-shaped — Markus knows this workflow
+  from his former company).
+
 ## Backlog
 
 - [ ] **Decide fate of `Shiny-to-React-R-Backend-Migration.docx`** (repo root,

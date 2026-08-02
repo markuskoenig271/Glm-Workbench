@@ -1,0 +1,56 @@
+{
+  "name": "glm-workbench-desktop",
+  "version": "0.1.0",
+  "description": "GLM Workbench - R Shiny feasibility app packaged as a Windows desktop application",
+  "main": "main.js",
+  "author": "Markus Koenig",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "local.glm-workbench",
+    "productName": "GLM Workbench",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "..",
+        "to": "shiny",
+        "filter": [
+          "app.R",
+          "core/**",
+          "modules/**"
+        ]
+      },
+      {
+        "from": "../../data/raw",
+        "to": "data/raw",
+        "filter": [
+          "*.parquet"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false
+    }
+  }
+}
