@@ -20,10 +20,13 @@ Three commits today, all pushed to `origin/main`:
 3. **9049c6c — README**: binary-only install hints (R 4.2's frozen CRAN
    binaries trigger a "compile from source?" prompt → answer Nein).
 
-Markus is currently **walking through the README in RStudio** (he reached
-step 2). Uncommitted: RStudio's own edits (`.Rproj.user` line in the root
-`.gitignore`, rewritten `glmworkbenchR.Rproj`) and this TODO/STATE save;
-the interview `.docx` at the repo root is still untracked (his call).
+4. **4266edd — session save** after Markus confirmed the README walkthrough
+   in RStudio worked ("R studio hat geklappt"); includes RStudio's own
+   housekeeping edits (`.Rproj.user` in the root `.gitignore`, rewritten
+   `glmworkbenchR.Rproj`).
+
+Working tree is clean except the interview `.docx` at the repo root
+(untracked; Markus was asked: commit / gitignore / leave — no answer yet).
 Next main-app work: **V3 pure premium** (design first) — confirm with Markus.
 
 ## What was done this session (details in TODO.md entries)
@@ -73,16 +76,13 @@ Next main-app work: **V3 pure premium** (design first) — confirm with Markus.
 
 ## Open / next steps
 
-1. **Markus' RStudio walkthrough** — finish README steps 2–4; report any
-   snag (screenshot). Then commit RStudio's `.gitignore`/`.Rproj` edits with
-   the next batch.
-2. **Commit this save** (TODO/STATE) when Markus says so; decide the `.docx`.
-3. **R follow-ups (his call):** `golem::add_module("frequency_model")` with
+1. **Decide the `.docx`** at the repo root (commit / gitignore / leave).
+2. **R follow-ups (his call):** `golem::add_module("frequency_model")` with
    `glm()` Poisson/Gamma as the first real modelling screen; `renv` pinning
    / current R; custom icon; R-Portable bundle.
-4. **V3 pure premium** — design step first (per-kind model slots,
+3. **V3 pure premium** — design step first (per-kind model slots,
    λ(x)·μ(x)), then V3.x compound-Poisson simulation. Confirm scope.
-5. Backlog unchanged (manual walkthrough incl. slice-3 TC12, regularisation
+4. Backlog unchanged (manual walkthrough incl. slice-3 TC12, regularisation
    rediscussion, synthetic Chapter 27 generator, V2.x notes).
 
 ## Architecture drift check (per CLAUDE.md save protocol)
