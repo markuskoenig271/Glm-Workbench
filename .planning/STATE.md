@@ -9,7 +9,7 @@ Read this + `TODO.md` at the start of every session. See `PROJECT.md` for the sp
 
 ## Headline
 
-Three commits today, all pushed to `origin/main`:
+Four commits today, all pushed to `origin/main`:
 
 1. **98c091f — V2 slice 3** (kind-aware Diagnostics + Prediction,
    `predict_severity`) → **V2 severity workflow complete.**
@@ -19,7 +19,6 @@ Three commits today, all pushed to `origin/main`:
    launchers + Electron exe updated, README with an RStudio guide.
 3. **9049c6c — README**: binary-only install hints (R 4.2's frozen CRAN
    binaries trigger a "compile from source?" prompt → answer Nein).
-
 4. **4266edd — session save** after Markus confirmed the README walkthrough
    in RStudio worked ("R studio hat geklappt"); includes RStudio's own
    housekeeping edits (`.Rproj.user` in the root `.gitignore`, rewritten
