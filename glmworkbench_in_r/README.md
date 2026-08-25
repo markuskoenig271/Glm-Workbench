@@ -101,9 +101,17 @@ undefined globals.
    nanoparquet, the tidyverse pieces, testthat …):
 
    ```r
-   install.packages("devtools")
-   devtools::install_deps(dependencies = TRUE)
+   install.packages("devtools", type = "binary")
+   devtools::install_deps(dependencies = TRUE, upgrade = "never")
    ```
+
+   `type = "binary"` / `upgrade = "never"` keep the CRAN binaries that match
+   your R version. On an older R (e.g. 4.2.x, whose CRAN binaries are frozen)
+   a plain `install.packages()` asks *"Möchten Sie versuchen, die Pakete,
+   welche eine Kompilierung erfordern, aus den Quelltexten zu
+   installieren?"* — answer **Nein**: the already-installed binary versions
+   are the ones the package was verified with, and compiling newer sources
+   with Rtools is slow and can leave mismatched packages behind.
 
 3. Load the package into the session and start the app:
 
