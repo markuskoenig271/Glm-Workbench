@@ -146,7 +146,7 @@ slices, each through the Change Validation Workflow.
   BonusMalus significant (41/42 terms insignificant)**, IG fit numerically
   infeasible on the heavy tail (now caught with a friendly error).
 - [x] **Slice 3: kind-aware Diagnostics + Prediction — DONE 2026-08-25
-  (uncommitted at save). → V2 severity workflow complete.**
+  (commit 98c091f, pushed). → V2 severity workflow complete.**
   `prediction.predict_severity(model, claims, spec)` (copy + `expected_claim_amount`,
   no exposure scaling, missing-predictor ValueError). `pages/05_Diagnostics.py`
   + `pages/06_Prediction.py` rewritten kind-aware from `model_meta["kind"]`:
@@ -240,7 +240,8 @@ slices, each through the Change Validation Workflow.
   installed by him once; packages auto-installed by the exe; bundled
   built-in datasets load).
 - [x] **Converted to an R package `glmworkbenchR` — DONE 2026-08-25
-  (uncommitted at save).** Markus' decisions: folder renamed `R/` →
+  (commit 21b0571 together with the golem-ification, pushed; README install
+  hints 9049c6c).** Markus' decisions: folder renamed `R/` →
   `glmworkbench_in_r/` (makes clear everything above/next to it is Python;
   underscores are illegal in R package names, so the package is
   `glmworkbenchR`), plain usethis/devtools workflow (roxygen, `load_all()`),
@@ -267,7 +268,7 @@ slices, each through the Change Validation Workflow.
   scratch helper script. Distributables rebuilt with `npm run dist`
   (portable + NSIS, 78 MB each); packaged portable exe smoke: exit 0, no
   orphan Rscript, package source + parquet present under `resources/`.
-- [x] **golem-ified — DONE 2026-08-25 (same session, uncommitted).** Markus
+- [x] **golem-ified — DONE 2026-08-25 (same session, in commit 21b0571).** Markus
   reconsidered ("für langfristige Wartbarkeit ist golem ein guter
   Standard"): the package now follows the golem layout without a restart —
   `dev/01_start.R`, `02_dev.R` (ready-made `add_module()` lines for the five
@@ -286,6 +287,13 @@ slices, each through the Change Validation Workflow.
   recommended tests added), `check` 0/0/1 NOTE, headless smokes (installed +
   load_all), Electron dev smoke, first-run E2E (scratch lib install incl.
   golem deps) — all green; dist rebuilt (see STATE for the packaged smoke).
+- [x] **RStudio walkthrough by Markus — DONE 2026-08-25 ("R studio hat
+  geklappt").** He opened `glmworkbenchR.Rproj` and followed the README;
+  R 4.2.1 asked to compile newer sources (frozen 4.2 CRAN binaries) →
+  "Nein" (documented in README, commit 9049c6c). RStudio added
+  `.Rproj.user` to the root `.gitignore` and rewrote `glmworkbenchR.Rproj`
+  (harmless, committed with the session save). Longer-term: a current R
+  (4.4/4.5) + `renv` pinning would remove the source-compile prompts.
 - [ ] Feasibility follow-ups when Markus decides: custom app icon; `renv`
   (or DESCRIPTION-style) version pinning before wider sharing; bundle
   R-Portable for true zero-install (lookup order already prefers it);

@@ -227,3 +227,4 @@ models/*
 !models/.gitkeep
 reports/*
 !reports/.gitkeep
+.Rproj.user
