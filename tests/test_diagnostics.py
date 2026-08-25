@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from pricing_engine import diagnostics
-from tests.conftest import GROUP_SPEC
+from tests.conftest import GROUP_SPEC, SEVERITY_SPEC
 
 
 class TestCoefficientTable:
@@ -91,3 +91,35 @@ class TestObservedVsPredicted:
         assert total_pred == pytest.approx(total_obs, rel=0.01)
         # bands are ordered by predicted frequency
         assert (np.diff(ovp["predicted_frequency"]) >= 0).all()
+
+
+class TestSeverityDiagnostics:
+    """The diagnostics engine is offset-None-safe: a severity model needs no special path."""
+
+    def test_calibration_is_average_claim_amount(  # type: ignore[no-untyped-def]
+        self, fitted_severity_model, severity_portfolio: pd.DataFrame
+    ) -> None:
+        ovp = diagnostics.observed_vs_predicted(
+            severity_portfolio, SEVERITY_SPEC, fitted_severity_model, groups=4
+        )
+        # offset None -> exposure is the row count -> the "frequency" columns are
+        # per-claim averages, i.e. observed vs predicted average claim amount
+        assert ovp["exposure"].sum() == 2_000
+        weighted_pred = (ovp["predicted_frequency"] * ovp["exposure"]).sum() / 2_000
+        assert weighted_pred == pytest.approx(
+            float(np.asarray(fitted_severity_model.fittedvalues).mean())
+        )
+        assert (np.diff(ovp["predicted_frequency"]) >= 0).all()
+        assert ovp["observed_frequency"].iloc[-1] > ovp["observed_frequency"].iloc[0]
+
+    def test_residuals_and_criteria(self, fitted_severity_model) -> None:  # type: ignore[no-untyped-def]
+        for kind in diagnostics.RESIDUAL_KINDS:
+            res = diagnostics.residuals(fitted_severity_model, kind)
+            assert len(res) == 2_000
+            assert np.isfinite(res).all()
+        info = diagnostics.information_criteria(fitted_severity_model)
+        assert info["n_obs"] == 2_000
+        assert info["n_params"] == 3
+        table = diagnostics.coefficient_table(fitted_severity_model).set_index("term")
+        assert bool(table.loc["Group[T.B]", "significant"])
+        assert table.loc["Group[T.B]", "exp_coef"] == pytest.approx(3.0, rel=0.15)

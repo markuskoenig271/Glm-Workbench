@@ -223,7 +223,7 @@ Delivered in three slices, each through the Change Validation Workflow:
 ## Version Roadmap (per car-insurance.md)
 
 1. **V1** — Frequency GLM (Chapter 27 example) — **complete 2026-07-25**
-2. **V2** — Severity GLM (Gamma) — **in progress** (slices 1–2 done, slice 3 open)
+2. **V2** — Severity GLM (Gamma) — **complete 2026-08-25** (slices 1–3)
 3. **V3** — Pure Premium (Frequency × Severity)
    - **V3.x** — Aggregate loss simulation (compound Poisson Monte Carlo, see Modeling)
 4. **V4** — Generic pricing workbench for arbitrary portfolios

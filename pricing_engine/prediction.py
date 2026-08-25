@@ -1,4 +1,4 @@
-"""Prediction: expected claim frequency (V1); pure premium arrives in V3."""
+"""Prediction: expected claim frequency (V1), expected claim amount (V2); pure premium in V3."""
 
 from typing import Any
 
@@ -26,6 +26,21 @@ def predict_frequency(model: Any, policies: pd.DataFrame, spec: DatasetSpec) -> 
         result["expected_claims"] = rate * result[spec.offset].to_numpy()
     else:
         result["expected_claims"] = rate
+    return result
+
+
+def predict_severity(model: Any, claims: pd.DataFrame, spec: DatasetSpec) -> pd.DataFrame:
+    """Return a copy of `claims` with expected_claim_amount per row.
+
+    Severity models are fitted per claim with no offset, so the expected claim
+    amount is the model mean exp(X beta) itself — no exposure scaling applies.
+    """
+    missing = [p for p in spec.predictors if p not in claims.columns]
+    if missing:
+        raise ValueError(f"Missing predictor column(s): {', '.join(missing)}")
+
+    result = claims.copy()
+    result["expected_claim_amount"] = np.asarray(model.predict(result))
     return result
 
 

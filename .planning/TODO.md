@@ -97,8 +97,11 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   TC10: one-way/histogram switches on the severity data, bin/log on it, and
   the switch-back-to-frequency check; now also severity-model TC9: Inverse
   Gaussian via the UI — expect the friendly infeasible-fit error, reverse
-  frequency slot-swap, run-history family/offset visual check). Kept in
-  backlog 2026-07-29 (Markus).
+  frequency slot-swap, run-history family/offset visual check; now also
+  severity-diagnostics-prediction TC12: single-claim widget variations
+  (BonusMalus up → expected claim amount up), pearson radio on the Gamma
+  model, severity CSV contents, IG failure keeps the previous Gamma model
+  in the slot). Kept in backlog 2026-07-29 (Markus).
 - [x] SQLite scope — DECIDED 2026-07-25 (decision 7 in `PROJECT.md`, storage
   section in `docs/architecture.md`): workbench state + model run history,
   never portfolio data; implemented lazily.
@@ -142,13 +145,38 @@ slices, each through the Change Validation Workflow.
   findings: mean fitted 2,230.9 (obs 2,265.5), AIC 573,121, **only
   BonusMalus significant (41/42 terms insignificant)**, IG fit numerically
   infeasible on the heavy tail (now caught with a friendly error).
-- [ ] **Slice 3: kind-aware Diagnostics + Prediction** —
-  `prediction.predict_severity` (expected claim amount per row, no exposure
-  scaling); Diagnostics wording (observed vs predicted average claim
-  amount); Prediction page severity mode (single-claim what-if without
-  exposure input, batch, CSV). Engine is already offset-None-safe throughout.
-  Replaces the interim "arrives with the next slice" guards that slice 2 put
-  on pages 05/06 (they read the single `model` slot + `model_meta["kind"]`).
+- [x] **Slice 3: kind-aware Diagnostics + Prediction — DONE 2026-08-25
+  (uncommitted at save). → V2 severity workflow complete.**
+  `prediction.predict_severity(model, claims, spec)` (copy + `expected_claim_amount`,
+  no exposure scaling, missing-predictor ValueError). `pages/05_Diagnostics.py`
+  + `pages/06_Prediction.py` rewritten kind-aware from `model_meta["kind"]`:
+  per-kind WORDING table on 05 (claim-size relativities, heavy-tail residual
+  caption, calibration = observed vs predicted average claim amount per
+  predicted-claim-amount band, severity calibration table columns renamed);
+  06 gets a "Single claim" what-if (no exposure input, one metric "Expected
+  claim amount"), "Predict for loaded claims" batch with the HONEST caption
+  that a log-link Gamma does NOT reproduce the observed total (freq keeps
+  its Poisson by-construction caption), kind-specific CSV filename. New
+  guards replacing the interim "next slice" ones: fresh session ("Fit a model
+  first — go to Frequency Model or Severity Model."), **dataset-kind ≠
+  model-kind guard on both pages** (the reverse slot-swap crash trap: a
+  678k-fitted model against a 26k frame), row-count guard on the calibration
+  section, and batches tagged with `predictions_kind` so a stale batch from
+  the other kind is never rendered. Engine `observed_vs_predicted` untouched
+  (offset None → per-claim averages; its `*_frequency` column names are now
+  documented as "per unit of offset" on the page). 7 new unit tests (severity
+  fixtures `SEVERITY_SPEC`/`severity_portfolio`/`fitted_severity_model` in
+  conftest; suite 109, 99.43% cov). E2E
+  `.planning/e2e-tests/severity-diagnostics-prediction.md` TC1–TC10 PASSED
+  via committed runner `e2e/e2e_severity_diag_pred.py` (incl. TC10 reverse
+  swap, executed); TC12 deferred/manual. Real-data findings: mean expected
+  claim amount 2,230.9; batch total 58,995,121 vs observed 59,909,216
+  (**−1.53% gap — the log-link Gamma balance teaching point**); calibration
+  bands' observed averages 1,586–5,453; median-profile single claim 1,504.
+  Slice-2 runner TC7 inverted (05/06 now render for a severity model);
+  regression runners `e2e_diag_pred.py` + `e2e_severity_model.py` re-executed
+  green (TC11). Docs: architecture roadmap marks V2 complete; e2e README lists
+  the new runner (appends 3 real runs to data/workbench.db).
 - [ ] V2.x notes: generalize `stepwise_selection` beyond the frequency
   fitter; consider a log-scale/binning improvement for the heavy-tailed
   ClaimAmount histogram (first bin holds >90% — known artifact, TC4).

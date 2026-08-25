@@ -105,3 +105,36 @@ def sample_portfolio() -> pd.DataFrame:
             "Claims": [0, 1, 2, 0],
         }
     )
+
+
+SEVERITY_SPEC = DatasetSpec(
+    name="test_severity",
+    label="Test severity claims",
+    target="ClaimAmount",
+    offset=None,
+    predictors=("Group", "Noise"),
+    kind="severity",
+)
+
+
+@pytest.fixture
+def severity_portfolio() -> pd.DataFrame:
+    """2k per-claim rows with a real Gamma signal (B ~3x A) and a no-effect Noise factor."""
+    rng = np.random.default_rng(27)
+    n = 2_000
+    group = rng.choice(["A", "B"], size=n)
+    mean = np.where(group == "A", 1_000.0, 3_000.0)
+    shape = 2.0
+    return pd.DataFrame(
+        {
+            "ClaimAmount": rng.gamma(shape, mean / shape),
+            "Group": group,
+            "Noise": rng.choice(["X", "Y"], size=n),
+        }
+    )
+
+
+@pytest.fixture
+def fitted_severity_model(severity_portfolio: pd.DataFrame) -> Any:
+    """A converged Gamma GLM (log link, no offset) on the severity portfolio."""
+    return glm.fit_severity_glm(severity_portfolio, "ClaimAmount ~ Group + Noise")

@@ -223,18 +223,23 @@ with streamlit_app() as URL, sync_playwright() as p:
     assert page.locator("[data-testid='stException']").count() == 0
     print("TC6 PASS (automated combobox route: click + type + Enter)")
 
-    # TC7 — single-slot stale state: interim guards on 05/06, no crash on 04
+    # TC7 — single-slot stale state: 05/06 RENDER kind-aware (slice 3 inverted the
+    # interim guards), no crash on 04
     page.get_by_role("link", name="Diagnostics").click()
-    expect(page.get_by_text("severity model").first).to_be_visible()
-    expect(page.get_by_text("next slice").first).to_be_visible()
-    assert page.locator("[data-testid='stMetric']").count() == 0
+    expect(page.get_by_text("Model summary").first).to_be_visible(timeout=60000)
+    assert page.get_by_text("next slice").count() == 0
+    metrics = page.locator("[data-testid='stMetric']")
+    expect(metrics.first).to_be_visible()
+    assert metrics.count() >= 4, metrics.count()
+    assert page.get_by_text("claim frequency").count() == 0
     assert page.get_by_text("Traceback").count() == 0
     assert page.locator("[data-testid='stException']").count() == 0
 
     page.get_by_role("link", name="Prediction").click()
-    expect(page.get_by_text("severity model").first).to_be_visible()
-    expect(page.get_by_text("next slice").first).to_be_visible()
-    assert page.get_by_role("button", name="Predict", exact=True).count() == 0
+    expect(page.get_by_text("Single claim").first).to_be_visible()
+    assert page.get_by_text("next slice").count() == 0
+    assert page.get_by_text("Single policy").count() == 0
+    expect(page.get_by_role("button", name="Predict", exact=True)).to_be_visible()
     assert page.get_by_text("Traceback").count() == 0
     assert page.locator("[data-testid='stException']").count() == 0
 
@@ -245,7 +250,7 @@ with streamlit_app() as URL, sync_playwright() as p:
     assert page.get_by_text("Model setup").count() == 0
     assert page.get_by_text("Traceback").count() == 0
     assert page.locator("[data-testid='stException']").count() == 0
-    print("TC7 PASS")
+    print("TC7 PASS (inverted by slice 3: 05/06 render kind-aware)")
 
     browser.close()
 

@@ -387,6 +387,16 @@ Same tab as TC5:
 
 ## TC7 — UI: single-slot stale-state — Diagnostics/Prediction interim guards, screen 04 no-crash
 
+> **Inverted by V2 slice 3 (2026-08-25):** Diagnostics and Prediction are now
+> kind-aware, so with a severity model active they RENDER instead of showing
+> the interim guard. Steps 1–2 below are superseded by: Diagnostics shows
+> `Model summary`, ≥ 4 `stMetric`, `next slice` count == 0, `claim frequency`
+> count == 0; Prediction shows `Single claim` (no `Single policy`, `next
+> slice` == 0) with a `Predict` button. Step 3 (screen-04 guard) is unchanged.
+> The committed runner `e2e/e2e_severity_model.py` implements the inverted
+> version; the full kind-aware behaviour is covered by
+> `severity-diagnostics-prediction.md`.
+
 Same tab as TC6 (severity model now the active model):
 
 1. Sidebar link `Diagnostics`. Expected:
@@ -539,3 +549,6 @@ plan.**
   all its TCs still green (its TC9 screen-04 guard intact).
 - TC9 DEFERRED/manual per plan (IG in the UI — expect the friendly error per
   TC2's outcome; reverse slot-swap; run-history visual check).
+
+Re-executed 2026-08-25 after V2 slice 3 with TC7 inverted (see the note
+under TC7): result recorded in `severity-diagnostics-prediction.md` TC11.
