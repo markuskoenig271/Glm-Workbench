@@ -1,0 +1,4 @@
+/* App-level overrides, bundled by golem::bundle_resources() in app_ui.R. */
+.navbar-brand {
+  font-weight: 600;
+}

@@ -1,13 +1,20 @@
-# Feature Engineering / cleansing module — mirrors pages/03_Feature_Engineering.py.
+# Feature Engineering / cleansing module -- mirrors pages/03_Feature_Engineering.py.
 # Cap a column (e.g. Exposure at 1.0), quantile/uniform binning to <col>_band,
 # log transform to <col>_log. Mutations write back to the shared state; new
 # engineered columns are appended to the spec's predictor list.
 
+#' Feature Engineering module UI
+#' @param id Module id.
+#' @noRd
 mod_feature_engineering_ui <- function(id) {
   ns <- NS(id)
   div(class = "container-fluid py-3", uiOutput(ns("page")))
 }
 
+#' Feature Engineering module server
+#' @param id Module id.
+#' @param state Shared `reactiveValues` app state.
+#' @noRd
 mod_feature_engineering_server <- function(id, state) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -39,8 +46,10 @@ mod_feature_engineering_server <- function(id, state) {
             4,
             h4("Cap a column"),
             p(em("e.g. cap Exposure at 1.0 policy-years")),
-            selectInput(ns("cap_col"), "Column", choices = numeric_cols(),
-                        selected = offset_default),
+            selectInput(ns("cap_col"), "Column",
+              choices = numeric_cols(),
+              selected = offset_default
+            ),
             numericInput(ns("cap_value"), "Cap at", value = 1, step = 0.1),
             actionButton(ns("apply_cap"), "Apply cap", class = "btn btn-primary")
           ),
@@ -51,7 +60,8 @@ mod_feature_engineering_server <- function(id, state) {
             selectInput(ns("bin_col"), "Column", choices = numeric_cols()),
             numericInput(ns("bin_n"), "Number of bins", value = 5, min = 2, max = 20),
             radioButtons(ns("bin_method"), "Method",
-                         choices = c("quantile", "uniform"), inline = TRUE),
+              choices = c("quantile", "uniform"), inline = TRUE
+            ),
             actionButton(ns("apply_bin"), "Create band", class = "btn btn-primary")
           ),
           column(
@@ -106,8 +116,10 @@ mod_feature_engineering_server <- function(id, state) {
       state$portfolio <- result
       append_predictor(paste0(input$bin_col, "_band"))
       showNotification(
-        sprintf("Created %s_band (%s, %d bins)",
-                input$bin_col, input$bin_method, input$bin_n),
+        sprintf(
+          "Created %s_band (%s, %d bins)",
+          input$bin_col, input$bin_method, input$bin_n
+        ),
         type = "message"
       )
     })

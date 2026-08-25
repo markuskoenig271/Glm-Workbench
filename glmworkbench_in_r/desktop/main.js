@@ -1,12 +1,14 @@
 // GLM Workbench desktop shell.
-// Spawns the R Shiny server as a child process, waits for its "Listening on"
-// line, shows the app in a native Electron window, and shuts the R process
-// down again when the window closes.
+// Spawns the R Shiny server (the glmworkbenchR package's run_app()) as a
+// child process, waits for its "Listening on" line, shows the app in a native
+// Electron window, and shuts the R process down again when the window closes.
 //
-// The only thing an end user has to provide is an R installation. Required R
-// packages are detected on every start and, if missing, installed
-// automatically into the user's package library (first-run setup with a live
-// progress window). R lookup order:
+// The only thing an end user has to provide is an R installation. On every
+// start the shell checks (a) the CRAN packages glmworkbenchR depends on and
+// (b) that the bundled glmworkbenchR version is installed; anything missing
+// is installed automatically into the user's package library (first-run
+// setup with a live progress window). glmworkbenchR is installed from the
+// bundled package source (pure R, no build tools needed). R lookup order:
 //   1. r-portable/ bundled in the app resources (zero-install EUC distribution)
 //   2. r-portable/ next to the portable .exe (PORTABLE_EXECUTABLE_DIR)
 //   3. GLM_WORKBENCH_RSCRIPT environment variable
@@ -21,10 +23,13 @@ const fs = require('fs');
 const SMOKE_TEST = !!process.env.GLM_WORKBENCH_SMOKE_TEST;
 const SMOKE_ALLOW_INSTALL = !!process.env.GLM_WORKBENCH_SMOKE_ALLOW_INSTALL;
 const STARTUP_TIMEOUT_MS = 60_000;
+const PKG_NAME = 'glmworkbenchR';
 
+// CRAN dependencies of glmworkbenchR (its DESCRIPTION Imports); installed
+// from CRAN binaries before the package itself is installed from source.
 const REQUIRED_PACKAGES = [
-  'shiny', 'bslib', 'DT', 'nanoparquet',
-  'dplyr', 'tidyr', 'purrr', 'readr', 'tibble',
+  'shiny', 'bslib', 'DT', 'nanoparquet', 'rlang', 'tidyselect',
+  'dplyr', 'tidyr', 'purrr', 'readr', 'tibble', 'golem', 'config',
 ];
 
 let rProcess = null;
@@ -34,6 +39,30 @@ let stderrTail = [];
 
 function resourceDir() {
   return app.isPackaged ? process.resourcesPath : __dirname;
+}
+
+// Source folder of the glmworkbenchR package: bundled under resources/pkg in
+// the packaged app, the parent folder (the package root) in development.
+function pkgDir() {
+  return app.isPackaged ? path.join(process.resourcesPath, 'pkg') : path.join(__dirname, '..');
+}
+
+// Parquet files: bundled under resources/data/raw in the packaged app, the
+// Python repo's data/raw in development.
+function dataDir() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'data', 'raw')
+    : path.join(__dirname, '..', '..', 'data', 'raw');
+}
+
+function bundledVersion() {
+  try {
+    const desc = fs.readFileSync(path.join(pkgDir(), 'DESCRIPTION'), 'utf8');
+    const m = desc.match(/^Version:\s*(\S+)/m);
+    return m ? m[1] : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 function findRscript() {
@@ -74,14 +103,8 @@ function findRscript() {
   return candidates.find((c) => fs.existsSync(c)) || null;
 }
 
-function shinyAppDir() {
-  return app.isPackaged
-    ? path.join(process.resourcesPath, 'shiny')
-    : path.join(__dirname, '..');
-}
-
-// Returns [] when all packages are present, a list of missing package names,
-// or null when the check itself could not be run (then just try to start).
+// Returns [] when all CRAN packages are present, a list of missing package
+// names, or null when the check itself could not be run (then just try).
 function missingPackages(rscript) {
   const quoted = REQUIRED_PACKAGES.map((p) => `'${p}'`).join(',');
   const res = spawnSync(
@@ -91,6 +114,28 @@ function missingPackages(rscript) {
   );
   if (res.status !== 0 || typeof res.stdout !== 'string') return null;
   return res.stdout.trim().split(/\s+/).filter(Boolean);
+}
+
+// Installed glmworkbenchR version, 'none' if absent, null if the check failed.
+function installedPkgVersion(rscript) {
+  const res = spawnSync(
+    rscript,
+    [
+      '-e',
+      `cat(if (requireNamespace('${PKG_NAME}', quietly = TRUE)) ` +
+        `as.character(packageVersion('${PKG_NAME}')) else 'none')`,
+    ],
+    { encoding: 'utf8', timeout: 60_000 }
+  );
+  if (res.status !== 0 || typeof res.stdout !== 'string') return null;
+  return res.stdout.trim();
+}
+
+function pkgInstallNeeded(rscript) {
+  const bundled = bundledVersion();
+  const installed = installedPkgVersion(rscript);
+  if (bundled === null || installed === null) return false;
+  return installed !== bundled;
 }
 
 function killTree(proc) {
@@ -237,19 +282,21 @@ function showApp(url, reuseWin) {
   });
 }
 
-// First-run setup: install the missing packages into the user library with a
-// live progress window, then continue into launchServer. Closing the window
-// cancels the setup and quits the app.
-function runInstaller(rscript, missing) {
+// First-run setup: install the missing CRAN packages and/or the bundled
+// glmworkbenchR package into the user library with a live progress window,
+// then continue into launchServer. Closing the window cancels the setup and
+// quits the app.
+function runInstaller(rscript, missing, installPkg) {
+  const items = missing.concat(installPkg ? [`${PKG_NAME} ${bundledVersion() || ''}`] : []);
   const win = newWindow(760, 560, 'GLM Workbench — first-time setup');
   loadPage(
     win,
     'GLM Workbench — first-time setup',
     `<h1>Setting up GLM Workbench</h1>
-     <p>The required R packages (<strong>${missing.join(', ')}</strong>) are being
-        installed into your personal R library. This happens once and can take a few
-        minutes — please leave this window open. The app starts automatically when
-        the setup is done.</p>
+     <p>The required R packages (<strong>${items.join(', ')}</strong>) are being
+        installed into your personal R library. This happens once per version and
+        can take a few minutes — please leave this window open. The app starts
+        automatically when the setup is done.</p>
      <pre id="log" style="height: 18em; overflow: auto"></pre>`
   );
 
@@ -274,22 +321,30 @@ function runInstaller(rscript, missing) {
     }
   });
 
-  const quoted = missing.map((p) => `'${p}'`).join(',');
-  const setupExpr =
-    `lib <- Sys.getenv('R_LIBS_USER'); ` +
-    `dir.create(lib, recursive = TRUE, showWarnings = FALSE); ` +
-    `.libPaths(c(lib, .libPaths())); ` +
-    `options(repos = c(CRAN = 'https://cloud.r-project.org')); ` +
-    `install.packages(c(${quoted}), lib = lib)`;
-  installerProcess = spawn(rscript, ['-e', setupExpr]);
+  const steps = [
+    `lib <- Sys.getenv('R_LIBS_USER')`,
+    `dir.create(lib, recursive = TRUE, showWarnings = FALSE)`,
+    `.libPaths(c(lib, .libPaths()))`,
+    `options(repos = c(CRAN = 'https://cloud.r-project.org'))`,
+  ];
+  if (missing.length > 0) {
+    const quoted = missing.map((p) => `'${p}'`).join(',');
+    steps.push(`install.packages(c(${quoted}), lib = lib)`);
+  }
+  if (installPkg) {
+    const src = pkgDir().replace(/\\/g, '/');
+    steps.push(`install.packages('${src}', repos = NULL, type = 'source', lib = lib)`);
+  }
+  installerProcess = spawn(rscript, ['-e', steps.join('; ')]);
   installerProcess.stdout.on('data', (c) => append(c.toString()));
   installerProcess.stderr.on('data', (c) => append(c.toString()));
 
   installerProcess.on('exit', () => {
     installerProcess = null;
     if (quitting || win.isDestroyed()) return;
-    const stillMissing = missingPackages(rscript);
-    if (stillMissing && stillMissing.length > 0) {
+    const stillMissing = missingPackages(rscript) || [];
+    if (pkgInstallNeeded(rscript)) stillMissing.push(PKG_NAME);
+    if (stillMissing.length > 0) {
       if (SMOKE_TEST) return fatalSmoke('setup failed, still missing: ' + stillMissing.join(', '));
       showInstallFailed(win, fullLog.split(/\r?\n/).slice(-25).join('\n'));
       return;
@@ -300,11 +355,11 @@ function runInstaller(rscript, missing) {
 }
 
 function launchServer(rscript, reuseWin) {
-  const appDir = shinyAppDir().replace(/\\/g, '/');
-  rProcess = spawn(rscript, [
-    '-e',
-    `shiny::runApp('${appDir}', launch.browser = FALSE)`,
-  ]);
+  rProcess = spawn(
+    rscript,
+    ['-e', `print(${PKG_NAME}::run_app(options = list(launch.browser = FALSE)))`],
+    { env: { ...process.env, GLM_WORKBENCH_DATA_DIR: dataDir() } }
+  );
 
   let started = false;
   const timeout = setTimeout(() => {
@@ -349,12 +404,15 @@ function start() {
     return;
   }
 
-  const missing = missingPackages(rscript);
-  if (missing && missing.length > 0) {
+  const missing = missingPackages(rscript) || [];
+  const installPkg = pkgInstallNeeded(rscript);
+  if (missing.length > 0 || installPkg) {
     if (SMOKE_TEST && !SMOKE_ALLOW_INSTALL) {
-      return fatalSmoke('missing packages: ' + missing.join(', '));
+      return fatalSmoke(
+        'setup needed: ' + missing.concat(installPkg ? [PKG_NAME] : []).join(', ')
+      );
     }
-    runInstaller(rscript, missing);
+    runInstaller(rscript, missing, installPkg);
     return;
   }
   launchServer(rscript, null);

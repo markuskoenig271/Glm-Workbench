@@ -1,0 +1,9 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^desktop$
+^dev$
+^run_app.*\.bat$
+^README\.md$
+^\.gitignore$
+^.*\.Rcheck$
+^.*\.tar\.gz$

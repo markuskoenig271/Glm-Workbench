@@ -1,7 +1,10 @@
-# Data Import module — mirrors pages/01_Data_Import.py.
+# Data Import module -- mirrors pages/01_Data_Import.py.
 # Built-in registry datasets or ad-hoc CSV upload with column mapping;
 # writes state$portfolio + state$spec shared with all other pages.
 
+#' Data Import module UI
+#' @param id Module id.
+#' @noRd
 mod_data_import_ui <- function(id) {
   ns <- NS(id)
   div(
@@ -35,12 +38,16 @@ mod_data_import_ui <- function(id) {
   )
 }
 
+#' Data Import module server
+#' @param id Module id.
+#' @param state Shared `reactiveValues` app state.
+#' @noRd
 mod_data_import_server <- function(id, state) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
     observeEvent(input$load_builtin, {
-      result <- withProgress(message = "Loading dataset…", value = 0.5, {
+      result <- withProgress(message = "Loading dataset\u2026", value = 0.5, {
         tryCatch(load_dataset(input$dataset), error = function(e) e)
       })
       if (inherits(result, "error")) {
@@ -97,8 +104,10 @@ mod_data_import_server <- function(id, state) {
         predictors = input$map_predictors
       )
       showNotification(
-        sprintf("Loaded %s (%s rows)", input$csv_file$name,
-                format(nrow(state$portfolio), big.mark = ",")),
+        sprintf(
+          "Loaded %s (%s rows)", input$csv_file$name,
+          format(nrow(state$portfolio), big.mark = ",")
+        ),
         type = "message"
       )
     })
@@ -113,7 +122,7 @@ mod_data_import_server <- function(id, state) {
         p(
           strong(spec$label),
           sprintf(
-            " — %s rows × %d columns | kind: %s | target: %s | offset: %s",
+            " \u2014 %s rows \u00d7 %d columns | kind: %s | target: %s | offset: %s",
             format(nrow(state$portfolio), big.mark = ","),
             ncol(state$portfolio), spec$kind, spec$target,
             if (is.null(spec$offset)) "none" else spec$offset

@@ -1,9 +1,12 @@
 @echo off
 setlocal
-rem EUC launcher, desktop-window variant: starts the Shiny server headless on
-rem a fixed port, then opens it in Edge/Chrome APP MODE (own window, no tabs
-rem or address bar - looks like a native desktop app). Closing that window
-rem shuts the R server down again.
+rem EUC launcher, desktop-window variant: starts the glmworkbenchR Shiny
+rem server headless on a fixed port, then opens it in Edge/Chrome APP MODE
+rem (own window, no tabs or address bar - looks like a native desktop app).
+rem Closing that window shuts the R server down again.
+rem
+rem Uses the INSTALLED glmworkbenchR package if present (devtools::install()),
+rem otherwise loads the package straight from this source folder via pkgload.
 
 set "PORT=8613"
 
@@ -36,11 +39,11 @@ if not defined BROWSER (
   exit /b 1
 )
 
-set "APPDIR=%~dp0"
-set "APPDIR=%APPDIR:\=/%"
+set "PKGDIR=%~dp0"
+set "PKGDIR=%PKGDIR:\=/%"
 
 echo Starting GLM Workbench server on port %PORT% ...
-start "GLM Workbench R server" /min "%RSCRIPT%" -e "shiny::runApp('%APPDIR%.', port=%PORT%, launch.browser=FALSE)"
+start "GLM Workbench R server" /min "%RSCRIPT%" -e "if (!requireNamespace('glmworkbenchR', quietly = TRUE)) pkgload::load_all('%PKGDIR%.', quiet = TRUE); print(glmworkbenchR::run_app(data_dir = '%PKGDIR%../data/raw', options = list(port = %PORT%, launch.browser = FALSE)))"
 
 rem --- wait until the server answers (max ~30 s) ----------------------------
 set /a TRIES=0

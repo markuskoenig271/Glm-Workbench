@@ -1,16 +1,26 @@
-# Cleansing / feature-engineering helpers — mirrors pricing_engine/preprocessing.py.
+# Cleansing / feature-engineering helpers -- mirrors pricing_engine/preprocessing.py.
 # Tidyverse style: dplyr mutate with dynamic column names ("{col}_band" :=).
 
-suppressPackageStartupMessages({
-  library(dplyr)
-})
-
+#' Cap a numeric column
+#'
+#' @param df Portfolio tibble.
+#' @param col Column name.
+#' @param cap Upper bound; values above it are set to `cap`.
+#' @return `df` with the column capped.
+#' @export
 cap_column <- function(df, col, cap) {
   if (!is.numeric(df[[col]])) stop("Column '", col, "' is not numeric")
   df |> mutate("{col}" := pmin(.data[[col]], cap))
 }
 
-# Adds <col>_band as a factor; quantile or uniform breaks.
+#' Bin a numeric column into `<col>_band`
+#'
+#' @param df Portfolio tibble.
+#' @param col Column name.
+#' @param n_bins Number of bins.
+#' @param method `"quantile"` (equal counts) or `"uniform"` (equal widths).
+#' @return `df` with an added factor column `<col>_band`.
+#' @export
 bin_numeric <- function(df, col, n_bins = 5, method = c("quantile", "uniform")) {
   method <- match.arg(method)
   x <- df[[col]]
@@ -27,7 +37,12 @@ bin_numeric <- function(df, col, n_bins = 5, method = c("quantile", "uniform")) 
   df |> mutate("{col}_band" := cut(.data[[col]], breaks = breaks, include.lowest = TRUE))
 }
 
-# Adds <col>_log; requires strictly positive values.
+#' Log-transform a strictly positive column into `<col>_log`
+#'
+#' @param df Portfolio tibble.
+#' @param col Column name.
+#' @return `df` with an added column `<col>_log`.
+#' @export
 log_transform <- function(df, col) {
   x <- df[[col]]
   if (!is.numeric(x)) stop("Column '", col, "' is not numeric")

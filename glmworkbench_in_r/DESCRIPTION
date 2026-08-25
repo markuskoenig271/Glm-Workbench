@@ -1,0 +1,35 @@
+Package: glmworkbenchR
+Title: GLM Workbench - R Shiny Port of the Actuarial Pricing Workbench
+Version: 0.1.0
+Authors@R:
+    person("Markus", "Koenig", email = "markuskoenig73@gmail.com", role = c("aut", "cre"))
+Description: Shiny application mirroring the Python GLM Workbench (Streamlit)
+    screens: dataset registry with parquet loaders, kind-aware portfolio
+    validation, feature engineering, and namespaced page modules sharing one
+    reactive state. Feasibility study for an end-user-computing (EUC)
+    deployment of a Shiny app packaged as an R package.
+License: file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.1.0)
+Imports:
+    bslib,
+    config (>= 0.3.2),
+    dplyr,
+    DT,
+    golem (>= 0.4.0),
+    nanoparquet,
+    purrr,
+    readr,
+    rlang,
+    shiny,
+    tibble,
+    tidyr,
+    tidyselect
+Suggests:
+    devtools,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3

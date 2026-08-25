@@ -5,89 +5,114 @@ Read this + `TODO.md` at the start of every session. See `PROJECT.md` for the sp
 
 ---
 
-## Last updated: 2026-08-25 (session 5 — V2 slice 3: kind-aware Diagnostics + Prediction)
+## Last updated: 2026-08-25 (session 5, part 2 — R app converted to the `glmworkbenchR` **golem** package)
 
 ## Headline
 
-**V2 (severity workflow) is complete.** Slice 3 delivered through the full
-Change Validation Workflow (BA agent → Test agent plan → TDD → committed
-Playwright runner): `prediction.predict_severity`, and pages 05/06 rewritten
-kind-aware from the single active-model slot. The interim "arrives with the
-next slice" guards are gone, replaced by real guards for the dangerous
-states (dataset kind ≠ model kind, row-count mismatch, stale batch from the
-other kind). Everything is **uncommitted** (Markus decides commits). Next
-main-app work: **V3 pure premium** (needs per-kind model slots — see TODO
-notes) — confirm with Markus before starting.
+Two things happened today. **Part 1 (committed 98c091f, pushed): V2 slice 3**
+— kind-aware Diagnostics + Prediction, `predict_severity`; V2 is complete.
+**Part 2 (uncommitted): the R Shiny feasibility app became a proper R
+package, then a golem app.** Markus' decisions: rename `R/` →
+`glmworkbench_in_r/` (folder name says "everything else is Python"),
+package name `glmworkbenchR` (underscores are illegal in R package names);
+first built plain usethis/devtools, then — "für langfristige Wartbarkeit"
+— **golem-ified in place** (dev/ scripts, golem-config.yml, app_config.R,
+`with_golem_options`, `inst/app/www`). Everything verified twice (check
+clean, 54 tests, smokes, first-run auto-install E2E, dist rebuilt). Next
+main-app work: **V3 pure premium** (design first) — confirm with Markus.
 
-## What was done this session
+## golem specifics (part 2b)
 
-- **Engine:** `predict_severity(model, claims, spec)` → copy +
-  `expected_claim_amount` (model mean, no exposure scaling; missing-predictor
-  ValueError). `observed_vs_predicted` deliberately untouched — with
-  `offset=None` its `exposure` column is the claim count and its
-  `*_frequency` columns are per-claim averages; the page renames them for
-  severity. 7 new unit tests + severity fixtures in conftest
-  (`SEVERITY_SPEC`, `severity_portfolio`, `fitted_severity_model`); suite
-  109 passed, 99.43% coverage; ruff + mypy clean.
-- **UI:** `pages/05_Diagnostics.py` per-kind `WORDING` table (claim-size
-  relativities, heavy-tail residual caption, average-claim-amount
-  calibration, renamed calibration table columns); `pages/06_Prediction.py`
-  severity mode ("Single claim" what-if without exposure → one metric
-  "Expected claim amount"; "Predict for loaded claims" batch; honest caption
-  that a log-link Gamma does NOT reproduce the observed total; kind-specific
-  CSV filename); both pages: fresh-session guard names both model screens,
-  **dataset-kind ≠ model-kind guard**, Diagnostics calibration row-count
-  guard, batches tagged with `predictions_kind`.
-- **E2E:** plan `.planning/e2e-tests/severity-diagnostics-prediction.md`
-  (TC1–TC12) + committed runner `e2e/e2e_severity_diag_pred.py`. TC1–TC11
-  PASSED first run (TC10 reverse slot-swap executed, not deferred); TC12
-  manual (added to the manual-walkthrough backlog). Slice-2 runner
-  `e2e_severity_model.py` TC7 inverted (05/06 now render for a severity
-  model) + its plan annotated; `e2e_diag_pred.py` untouched and green.
-- **Real-data findings (record for the teaching captions):** mean expected
-  claim amount 2,230.9; batch total 58,995,121 vs observed 59,909,216 →
-  **−1.53% gap** (log-link Gamma balance is not exact — unlike Poisson's
-  36,102 = 36,102); calibration band observed averages 1,586–5,453;
-  median-profile single claim 1,504.
-- Docs: `docs/architecture.md` roadmap marks V2 complete (2026-08-25);
-  `e2e/README.md` lists the new runner and its 3 appended history runs.
+- Dev loop = `dev/run_dev.R` (`golem::document_and_reload(); run_app()`);
+  `dev/02_dev.R` carries ready-made `golem::add_module()` lines for the
+  five placeholder screens and `add_fct("glm")` for the modelling engine.
+- `run_app(..., data_dir)` returns the app via `with_golem_options()`; Shiny
+  run options go through `options = list(port =, launch.browser =)`. Rscript
+  callers wrap it in `print()` (launchers, main.js) so it runs regardless of
+  autoprint. `data_dir()` order: golem opt → env var → golem-config →
+  `inst/extdata` → `../data/raw`.
+- New runtime deps golem + config (also in the exe's `REQUIRED_PACKAGES`;
+  the first-run E2E installed them into the scratch lib fine).
+- Dist rebuilt 14:55 (golem version, 78 MB each); packaged portable exe
+  smoke exit 0, no orphan Rscript, `resources/pkg` now also carries
+  `inst/golem-config.yml` + `inst/app/www`.
+
+## What was done in part 2 (R package)
+
+- `glmworkbench_in_r/`: `DESCRIPTION` (Imports: shiny, bslib, DT,
+  nanoparquet, dplyr, tidyr, tidyselect, purrr, readr, tibble, rlang;
+  Suggests devtools/testthat/withr; `Depends: R >= 4.1` for `|>`),
+  roxygen-generated `NAMESPACE`/`man/` (8 Rd), `LICENSE` (all rights
+  reserved — Markus never picked a licence; check shows no NOTE for it),
+  `.Rbuildignore`, `.gitignore`, `glmworkbenchR.Rproj`.
+- `R/`: `glmworkbenchR-package.R` (all `@import`/`@importFrom`; no
+  `library()`/`source()` anywhere), `app_ui.R`, `app_server.R`, exported
+  `run_app(data_dir, port, launch.browser, ...)`, `fct_datasets.R`
+  (registry, loaders, `validate_portfolio`, exported `data_dir()` resolving
+  env `GLM_WORKBENCH_DATA_DIR` → option `glmworkbenchR.data_dir` →
+  `inst/extdata` → `../data/raw`), `fct_preprocessing.R`, `mod_*.R`
+  (`@noRd`). Non-ASCII in strings escaped as `\uXXXX` (check portability).
+- `tests/testthat/`: 41 tests (preprocessing on toy tibbles; registry,
+  validation incl. kind-awareness; real-data facts 678,013 / 26,444 /
+  mean 2,265.5 — skipped when parquet not reachable, e.g. inside
+  `R CMD check`'s temp copy unless `GLM_WORKBENCH_DATA_DIR` is set).
+- Launchers `run_app.bat` / `run_app_desktop.bat`: use the installed
+  package, else `pkgload::load_all()` of the source folder; call
+  `glmworkbenchR::run_app(data_dir = '<pkg>/../data/raw', ...)`.
+- Electron `desktop/main.js`: bundles the package source as
+  `resources/pkg` (electron-builder `extraResources`), version-checks the
+  installed `glmworkbenchR` against the bundled `DESCRIPTION` and installs
+  it from source into `R_LIBS_USER` when missing/outdated (pure R, no
+  Rtools), CRAN deps auto-installed as before, runs
+  `glmworkbenchR::run_app(launch.browser = FALSE)` with
+  `GLM_WORKBENCH_DATA_DIR` pointing at the bundled parquet.
+- README rewritten: layout, `data_dir()` resolution, **"Development in
+  RStudio"** loop (load_all → run_app; document; test; check; install),
+  conventions for adding modules/deps, running without RStudio, EUC findings.
+- Verification: `devtools::test()` 41 pass / 0 skip; `devtools::check()`
+  0 errors, 0 warnings, 1 NOTE ("unable to verify current time" — harmless);
+  `devtools::install()`; headless smoke via installed package (HTTP 200,
+  3 s) and via the `load_all` fallback (1 s); Electron dev `npm start`
+  smoke `SMOKE_OK`; **first-run E2E**: package removed from the real
+  library → exe installed it from the bundled source into a scratch
+  `R_LIBS_USER` → `SMOKE_OK`; real library untouched, then reinstalled.
+  `npm run dist` rebuilt the portable + NSIS exes (78 MB each,
+  `desktop/dist/`, gitignored); packaged smoke of the portable exe: exit 0,
+  no orphan Rscript, `resources/pkg` holds DESCRIPTION/NAMESPACE/R/man and
+  `resources/data/raw` both parquet files.
 
 ## Working agreements / lessons (keep honoring these)
 
-- Change Validation Workflow every slice on the MAIN app (BA agent → Test
-  agent plan in `.planning/e2e-tests/` → committed runner in `e2e/`).
 - Commits only when Markus says so; conventional commits, no Co-Authored-By.
-- Never delete `data/workbench.db`; runners append real runs by design.
-- Playwright: one tab + sidebar links after loading; `expect` before
-  `count`; full-phrase absence assertions (`get_by_text` is case-insensitive
-  substring — bare `frequency` matches the sidebar); the combobox route
-  (click + type fragment + Enter) now proven for BOTH `severity` and
-  `frequency`. Bash heredocs choke on non-ASCII (—, μ) — use the Write tool
-  for files containing them.
+- R package hygiene: roxygen headers, `@importFrom` in
+  `R/glmworkbenchR-package.R`, `.data[[col]]` / `all_of()` for columns,
+  `\uXXXX` for non-ASCII, `devtools::document()` after editing headers,
+  never edit `NAMESPACE`/`man/` by hand.
+- Tooling gotcha: the Bash tool's heredocs mangle non-ASCII characters AND
+  backslash escapes — use the Write/Edit tools (or a script file) for any
+  content with `—`, `\u…`, etc.
+- Playwright/Streamlit lessons unchanged (see part-1 STATE in git history
+  98c091f and `e2e/README.md`).
 
 ## Open / next steps
 
-1. **Commit decision (Markus):** slice 3 (engine, pages, tests, e2e plan +
-   runner, docs, TODO/STATE) — suggested `feat: kind-aware diagnostics +
-   prediction, predict_severity (V2 slice 3)`. Still-untracked interview
-   `.docx` at the repo root awaits his call (backlog item).
-2. **V3 pure premium** — design step first (architecture-first rule): split
-   the single active-model slot per kind (`models["frequency"]`,
-   `models["severity"]`), pure premium = λ(x)·μ(x), then V3.x compound
-   Poisson simulation (needs `model.scale` dispersion surfaced). Confirm
-   scope with Markus before starting.
-3. Backlog unchanged: manual walkthrough (now incl. slice-3 TC12),
-   regularisation rediscussion, synthetic Chapter 27 generator, R feasibility
-   follow-ups, V2.x notes (generalize stepwise beyond frequency; heavy-tail
-   histogram binning).
+1. **Commit decision (Markus):** the package conversion (rename + new
+   files + TODO/STATE). Suggested:
+   `refactor(r): convert Shiny app to the glmworkbenchR package (glmworkbench_in_r/)`.
+   Still-untracked interview `.docx` at the repo root awaits his call.
+2. Optional R follow-ups (TODO): `renv` pinning; custom icon; R-Portable
+   bundle; model screens in R (`glm()` Poisson/Gamma); if server-side, the
+   package is already golem-shaped.
+3. **V3 pure premium** — design step first (per-kind model slots,
+   λ(x)·μ(x)), then V3.x simulation. Confirm scope with Markus.
+4. Backlog unchanged (manual walkthrough incl. slice-3 TC12, regularisation
+   rediscussion, synthetic Chapter 27 generator, V2.x notes).
 
 ## Architecture drift check (per CLAUDE.md save protocol)
 
-No drift: `docs/architecture.md` "V2 — Severity design" slice 3 and
-`docs/ui_screens.md` sections 6/7 describe exactly what was built
-(kind-aware wording, single-claim what-if without exposure, batch per claim
-row). Only the roadmap status line was updated. One design note worth
-carrying into the V3 design (not drift): the diagnostics engine's
-`observed_vs_predicted` column names are frequency-flavoured
-(`observed_frequency`/`predicted_frequency`) while being reused for
-severity averages — rename to kind-neutral names when V3 touches it.
+No drift in the Python design docs (nothing in `pricing_engine/`, `pages/`
+or the data layer changed in part 2). `docs/architecture.md` intentionally
+does not cover the R package — it is an experimental feasibility spike
+outside the product architecture, tracked in TODO; its own design lives in
+`glmworkbench_in_r/README.md`. If the R app is promoted beyond a spike it
+needs a design doc under `docs/`.

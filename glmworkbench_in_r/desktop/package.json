@@ -1,7 +1,7 @@
 {
   "name": "glm-workbench-desktop",
   "version": "0.1.0",
-  "description": "GLM Workbench - R Shiny feasibility app packaged as a Windows desktop application",
+  "description": "GLM Workbench - the glmworkbenchR Shiny package packaged as a Windows desktop application",
   "main": "main.js",
   "author": "Markus Koenig",
   "license": "UNLICENSED",
@@ -27,11 +27,14 @@
     "extraResources": [
       {
         "from": "..",
-        "to": "shiny",
+        "to": "pkg",
         "filter": [
-          "app.R",
-          "core/**",
-          "modules/**"
+          "DESCRIPTION",
+          "NAMESPACE",
+          "LICENSE",
+          "R/**",
+          "man/**",
+          "inst/**"
         ]
       },
       {

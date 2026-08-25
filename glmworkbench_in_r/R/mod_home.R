@@ -1,13 +1,17 @@
-# Home page module — workflow status overview (mirrors app.py Home).
+# Home page module -- workflow status overview (mirrors app.py Home).
 
+#' Home module UI
+#' @param id Module id.
+#' @noRd
 mod_home_ui <- function(id) {
   ns <- NS(id)
   div(
     class = "container-fluid py-3",
-    h3("GLM Workbench — R Shiny feasibility study"),
+    h3("GLM Workbench \u2014 R Shiny feasibility study"),
     p(
       "Template mirroring the Streamlit app's screens with the standard Shiny",
-      "module pattern (namespaced UI + server modules, shared reactive state).",
+      "module pattern (namespaced UI + server modules, shared reactive state),",
+      "packaged as an R package (glmworkbenchR).",
       "Feasibility scope: Data Import and Feature Engineering / cleansing;",
       "the modelling screens are namespaced placeholders."
     ),
@@ -16,6 +20,10 @@ mod_home_ui <- function(id) {
   )
 }
 
+#' Home module server
+#' @param id Module id.
+#' @param state Shared `reactiveValues` app state.
+#' @noRd
 mod_home_server <- function(id, state) {
   moduleServer(id, function(input, output, session) {
     output$status <- renderTable({

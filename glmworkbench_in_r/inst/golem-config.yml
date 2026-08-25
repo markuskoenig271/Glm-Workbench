@@ -1,0 +1,12 @@
+default:
+  golem_name: glmworkbenchR
+  golem_version: 0.1.0
+  app_prod: no
+  # Folder with the freMTPL2*.parquet files. ~ (NULL) = fall back to the
+  # GLM_WORKBENCH_DATA_DIR env var, the package's inst/extdata, then
+  # ../data/raw of the Python repo (see data_dir()).
+  data_dir: ~
+production:
+  app_prod: yes
+dev:
+  golem_wd: !expr golem::pkg_path()

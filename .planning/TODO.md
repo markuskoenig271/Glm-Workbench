@@ -183,6 +183,10 @@ slices, each through the Change Validation Workflow.
 
 ## Tech feasibility — R Shiny EUC app (started 2026-08-02)
 
+(History below refers to the original `R/` folder; it was renamed to
+`glmworkbench_in_r/` on 2026-08-25 when the app became the R package
+`glmworkbenchR` — see the last DONE entry of this section.)
+
 - [x] **R Shiny template app — DONE 2026-08-02 (uncommitted).** `R/` folder
   mirroring all 7 Streamlit pages with the standard Shiny module pattern
   (`NS()` + `moduleServer()`, one module per page, shared `reactiveValues`
@@ -235,6 +239,53 @@ slices, each through the Change Validation Workflow.
   then after the self-managing rebuild **confirmed it works there** (R
   installed by him once; packages auto-installed by the exe; bundled
   built-in datasets load).
+- [x] **Converted to an R package `glmworkbenchR` — DONE 2026-08-25
+  (uncommitted at save).** Markus' decisions: folder renamed `R/` →
+  `glmworkbench_in_r/` (makes clear everything above/next to it is Python;
+  underscores are illegal in R package names, so the package is
+  `glmworkbenchR`), plain usethis/devtools workflow (roxygen, `load_all()`),
+  NOT golem. Layout: `DESCRIPTION` (Imports declared, no `library()`/`source()`
+  anywhere), roxygen-generated `NAMESPACE` + `man/`, `R/app_ui.R` +
+  `R/app_server.R` + exported `run_app(data_dir, port, launch.browser)`,
+  `R/fct_datasets.R` (+ `data_dir()` resolution: env
+  `GLM_WORKBENCH_DATA_DIR` → option → `inst/extdata` → `../data/raw`),
+  `R/fct_preprocessing.R`, `R/mod_*.R` (`@noRd`), `.Rproj`, `.Rbuildignore`,
+  LICENSE (all rights reserved), testthat 3e suite (41 tests incl. real-data
+  facts, skipped without parquet). Verified: `devtools::check()` 0 errors /
+  0 warnings / 1 harmless NOTE (future timestamps), `devtools::install()`,
+  headless smoke via the installed package AND via the launchers'
+  `pkgload::load_all()` fallback, Electron dev smoke `SMOKE_OK`, and the
+  first-run E2E (package removed → exe installs `glmworkbenchR` from the
+  bundled source into a scratch `R_LIBS_USER` → app boots; real library
+  untouched). Electron `main.js` now runs `glmworkbenchR::run_app()`, bundles
+  the package source under `resources/pkg`, version-checks it against the
+  installed one (reinstalls on version bump), sets `GLM_WORKBENCH_DATA_DIR`
+  to the bundled parquet; launchers call `run_app()` (installed pkg or
+  `load_all` fallback). README rewritten with a "Development in RStudio"
+  section (load_all / document / test / check / install loop). Non-ASCII in
+  R strings must be `\uXXXX` escapes (R CMD check portability) — done via a
+  scratch helper script. Distributables rebuilt with `npm run dist`
+  (portable + NSIS, 78 MB each); packaged portable exe smoke: exit 0, no
+  orphan Rscript, package source + parquet present under `resources/`.
+- [x] **golem-ified — DONE 2026-08-25 (same session, uncommitted).** Markus
+  reconsidered ("für langfristige Wartbarkeit ist golem ein guter
+  Standard"): the package now follows the golem layout without a restart —
+  `dev/01_start.R`, `02_dev.R` (ready-made `add_module()` lines for the five
+  placeholder screens), `03_deploy.R`, `run_dev.R`; `R/app_config.R`
+  (`app_sys()`, `get_golem_config()`); `inst/golem-config.yml`
+  (default/production/dev, `data_dir` per env); `inst/app/www/custom.css`
+  bundled via `golem_add_external_resources()` in `app_ui(request)`;
+  `run_app(onStart, options, enableBookmarking, uiPattern, data_dir, ...)`
+  via `golem::with_golem_options()` — Shiny run options now go through
+  `options = list(port=, launch.browser=)`, `data_dir` is a golem opt read
+  first by `data_dir()` (then env var → golem-config → extdata →
+  ../data/raw). golem (>= 0.4.0) + config in Imports and in the exe's
+  `REQUIRED_PACKAGES`; launchers/main.js call
+  `print(glmworkbenchR::run_app(options = list(...)))`. golem 1.0.1 + config
+  0.3.2 installed on the dev laptop. Verified again: 54 tests (13 golem
+  recommended tests added), `check` 0/0/1 NOTE, headless smokes (installed +
+  load_all), Electron dev smoke, first-run E2E (scratch lib install incl.
+  golem deps) — all green; dist rebuilt (see STATE for the packaged smoke).
 - [ ] Feasibility follow-ups when Markus decides: custom app icon; `renv`
   (or DESCRIPTION-style) version pinning before wider sharing; bundle
   R-Portable for true zero-install (lookup order already prefers it);
