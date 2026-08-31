@@ -92,7 +92,12 @@ Chapter 27 generator moved to the backlog (2026-07-25, Markus' call).
   reduced 3-predictor spec — all three kept (all genuine effects; stops after
   round 1, 4 fits/9s), guard + section-render UI TCs passed; full UI run
   manual/deferred (minutes by design).
-- [ ] Manual walkthrough by Markus + the deferred/manual TCs from the E2E docs
+- [ ] Manual walkthrough by Markus — **STARTED 2026-08-31** along the new
+  `manuals/glm-workbench_user_manual.docx` (he ran the app, inspected the
+  frequency QQ plot, asked about the 36,102-vs-26,444 claims gap — both
+  answered in chat; app stopped at session end). Remaining: the rest of the
+  manual (severity, persistence, quote calculator) + the deferred/manual TCs
+  from the E2E docs
   (selectbox/radio changes, CSV save, F5 history persistence; severity-dataset
   TC10: one-way/histogram switches on the severity data, bin/log on it, and
   the switch-back-to-frequency check; now also severity-model TC9: Inverse
@@ -255,6 +260,15 @@ Validation Workflow.
   severity model quotes identically (slice-2 interplay). TC12
   deferred/manual (widget variations, G6 hint, G8 unseen level, CSV
   contents, all-loaded variant).
+- [ ] **V3.x follow-up notes (2026-08-31):** (a) manual addendum offered to
+  Markus (no answer yet): Feature Engineering also applies to the severity
+  dataset + the G6 caveat that engineered columns must be rebuilt on the
+  frequency frame for the quote screen (quantile bins on two frames give
+  different edges — open corner); (b) educational experiment idea from the
+  QQ-plot discussion: fit Negative Binomial on the frequency data and
+  compare AIC (overdispersion check — the family option already exists);
+  (c) V3.x simulation (compound Poisson) is the next designed milestone —
+  see Backlog.
 
 ## Tech feasibility — R Shiny EUC app (started 2026-08-02)
 
@@ -380,10 +394,8 @@ Validation Workflow.
 
 ## Backlog
 
-- [ ] **Decide fate of `Shiny-to-React-R-Backend-Migration.docx`** (repo root,
-  untracked, created 2026-07-30): interview material, not project code —
-  Markus to say commit / gitignore / keep local. Source outline lives in the
-  session transcript only.
+- [x] **`Shiny-to-React-R-Backend-Migration.docx` — DECIDED 2026-08-31:**
+  Markus chose commit; committed and pushed (5975c27).
 - [ ] **Chapter 27 synthetic dataset generator** (`generate_chapter27_portfolio`,
   ~20k policies) + the educational features that need its hidden data-generating
   model: `compare_with_true_model` diagnostic, Dummy1/Dummy2 insignificance demo.
