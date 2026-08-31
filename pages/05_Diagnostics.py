@@ -108,6 +108,16 @@ st.altair_chart(whiskers + points + reference, use_container_width=True)
 with st.expander("Coefficient table"):
     st.dataframe(table.round(4))
 
+# a model loaded from the run history is data-stripped (saved with remove_data):
+# it predicts and reports coefficients, but carries no residual/fitted arrays
+if meta.get("source") == "loaded":
+    st.info(
+        "This model was loaded from the run history — the saved file predicts and "
+        "reports coefficients, but carries no residual data. Refit in this session "
+        "to see residuals, the QQ plot, calibration and the full summary."
+    )
+    st.stop()
+
 st.subheader("Residuals")
 residual_kind = st.radio("Residual kind", diagnostics.RESIDUAL_KINDS, horizontal=True)
 hist = diagnostics.residual_histogram(model, kind=residual_kind)

@@ -279,17 +279,23 @@ to compute premiums, and fitted models survive a browser refresh.
   `remove_data` keeps the pickle small (parameters and scalar fit statistics,
   no 678k-row data arrays): `predict()`, `params`/`bse`/`pvalues`/`conf_int`,
   AIC/BIC/deviance all survive; `resid_*` and `fittedvalues` do NOT.
-- **Load:** the run-history tables on screens 04/07 get a per-row "Load"
-  action (rows of the matching kind with a non-NULL `model_path`);
-  `storage.load_model(run_id)` fills that kind's session slot, with
-  `model_meta["source"] = "loaded"` (a fresh fit sets `"fitted"`). A missing
-  file or a statsmodels version-mismatch unpickling error is caught with a
-  friendly message (local tool — no cross-version guarantee needed).
+- **Load:** the run-history sections on screens 04/07 get a Load control
+  (selectbox of eligible runs — matching kind via the disjoint family sets,
+  non-NULL `model_path` — plus a "Load saved model" button);
+  `storage.load_model(run_id)` fills that kind's session slot with the model
+  and a meta reconstructed from the run row, `model_meta["source"] =
+  "loaded"` (a fresh fit sets `"fitted"`). A missing file or an unreadable
+  pickle is caught with a friendly message (local tool — no cross-version
+  guarantee needed). `save_model` deep-copies before `save(remove_data=True)`
+  — statsmodels strips in place, and the live session model must keep its
+  residuals.
 - **Documented limitation (by design):** a loaded model prices and shows
-  coefficients/criteria, but residual/QQ/calibration sections on Diagnostics
-  need the data arrays stripped by `remove_data` — for a `source="loaded"`
-  model those sections show an info hint ("refit in this session for residual
-  diagnostics") instead of crashing. The coefficient CI chart and criteria
+  coefficients/criteria, but the residual/QQ/calibration sections AND the
+  statsmodels-summary expander on Diagnostics need the data arrays stripped
+  by `remove_data` (`summary()` raises on a stripped model) — for a
+  `source="loaded"` model the page stops after the coefficient section with
+  one info hint ("refit in this session to see residuals, the QQ plot,
+  calibration and the full summary"). The coefficient CI chart and criteria
   metrics render normally. Prediction and Pure Premium work fully.
 
 ### Slice 3 — engine `predict_pure_premium` + Pure Premium screen

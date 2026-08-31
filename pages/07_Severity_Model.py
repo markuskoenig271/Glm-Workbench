@@ -56,10 +56,11 @@ if st.button("Fit model", type="primary"):
             "formula": formula,
             "family": family,
             "kind": "severity",
+            "source": "fitted",
             **info,
         }
         with storage.connect() as conn:
-            storage.record_model_run(
+            run_id = storage.record_model_run(
                 conn,
                 dataset=spec.name,
                 target=spec.target,
@@ -73,7 +74,12 @@ if st.button("Fit model", type="primary"):
                 log_likelihood=info["log_likelihood"],
                 coefficients=model.params.to_dict(),
             )
-        st.success(f"Model fitted and recorded (AIC {info['aic']:,.0f}).")
+            try:
+                storage.save_model(conn, run_id, model)
+            except OSError as exc:  # the run row stays valid, just not loadable
+                st.warning(f"Model recorded but the model file could not be saved: {exc}")
+            else:
+                st.success(f"Model fitted and recorded (AIC {info['aic']:,.0f}) — saved for reuse.")
 
 if "model_severity" in st.session_state:
     model = st.session_state["model_severity"]
@@ -140,3 +146,52 @@ else:
             ["id", "created_at", "dataset", "family", "formula", "n_obs", "aic", "bic", "deviance"]
         ].round(1)
     )
+
+    if flash := st.session_state.pop("load_flash_severity", None):
+        (st.success if flash[0] == "success" else st.error)(flash[1])
+
+    loadable = runs[runs["family"].isin(glm.SEVERITY_FAMILIES) & runs["model_path"].notna()]
+    if loadable.empty:
+        st.caption(
+            "No saved severity model files yet — runs recorded before model "
+            "persistence have none; fit a model to save one."
+        )
+    else:
+        by_id = loadable.set_index("id")
+
+        def _load_saved_model() -> None:
+            run_id = int(st.session_state["load_run_severity"])
+            try:
+                with storage.connect() as conn:
+                    loaded, loaded_meta = storage.load_model(conn, run_id)
+            except (ValueError, FileNotFoundError) as exc:
+                st.session_state["load_flash_severity"] = ("error", str(exc))
+                return
+            except Exception as exc:  # noqa: BLE001 — unreadable pickle stays friendly
+                st.session_state["load_flash_severity"] = (
+                    "error",
+                    f"The saved model file could not be read — refit instead. ({exc})",
+                )
+                return
+            st.session_state["model_severity"] = loaded
+            st.session_state["model_severity_meta"] = loaded_meta
+            st.session_state["load_flash_severity"] = (
+                "success",
+                f"Loaded run {run_id} ({loaded_meta['family']}, "
+                f"AIC {loaded_meta['aic']:,.0f}) — no refit needed.",
+            )
+
+        st.selectbox(
+            "Load a saved severity model",
+            loadable["id"].tolist(),
+            format_func=lambda rid: (
+                f"Run {rid} · {by_id.loc[rid, 'created_at']} · {by_id.loc[rid, 'family']} "
+                f"· AIC {by_id.loc[rid, 'aic']:,.0f}"
+            ),
+            key="load_run_severity",
+        )
+        st.button("Load saved model", on_click=_load_saved_model)
+        st.caption(
+            "Loading restores the fitted model without a refit — it predicts "
+            "and reports coefficients; residual diagnostics need a fresh fit."
+        )

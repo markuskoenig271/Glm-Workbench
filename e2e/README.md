@@ -29,6 +29,7 @@ uv run python e2e/e2e_severity_dataset.py # + UI, ~1 min (V2 slice 1)
 uv run python e2e/e2e_severity_model.py  # + UI, ~2 min (three Gamma fits, one IG attempt)
 uv run python e2e/e2e_severity_diag_pred.py # + UI, ~3 min (two Poisson + two Gamma fits, V2 slice 3)
 uv run python e2e/e2e_model_slots.py     # + UI, ~4 min (per-kind model slots, V3 slice 1)
+uv run python e2e/e2e_model_persistence.py # + UI, ~5 min (save/load fitted models, V3 slice 2)
 ```
 
 Each script prints `... PASS` per test case and exits non-zero on the first failure.
@@ -45,7 +46,13 @@ Each script prints `... PASS` per test case and exits non-zero on the first fail
   deferred/manual (see the "deferred" notes in each plan).
 - Numeric truths are asserted at the engine level, not scraped from the UI.
 - `e2e_freq_model.py` appends two real runs, `e2e_severity_model.py` one real
-  run, `e2e_severity_diag_pred.py` three real runs (two Poisson, one Gamma)
-  and `e2e_model_slots.py` three real runs (two Poisson, one Gamma) to the
-  history in `data/workbench.db` (that behavior is under test).
-  **Never delete `data/workbench.db`.**
+  run, `e2e_severity_diag_pred.py` three real runs (two Poisson, one Gamma),
+  `e2e_model_slots.py` three real runs (two Poisson, one Gamma) and
+  `e2e_model_persistence.py` three real runs to the history in
+  `data/workbench.db` (that behavior is under test). Since V3 slice 2 every
+  UI fit ALSO writes a small pickle to `models/` (gitignored — leave them,
+  they are the Load feature's data). **Never delete `data/workbench.db`.**
+- Streamlit mounts metric/chart widgets asynchronously after their text
+  deltas: `expect` the `stMetric`/`stVegaLiteChart` LOCATOR itself before any
+  `.count()` on it — a nearby text expect is not enough (and beware text that
+  also appears in selectbox option labels, e.g. "AIC").

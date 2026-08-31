@@ -25,6 +25,18 @@ _FREQUENCY_FAMILY_BUILDERS = {
 }
 
 
+def family_kind(family: str) -> str:
+    """Model kind ("frequency" / "severity") for a family name — the family sets
+    are disjoint, so a stored run's kind is derivable without an extra column."""
+    if family in FREQUENCY_FAMILIES:
+        return "frequency"
+    if family in SEVERITY_FAMILIES:
+        return "severity"
+    raise ValueError(
+        f"Unknown family '{family}' — valid: {', '.join(FREQUENCY_FAMILIES + SEVERITY_FAMILIES)}"
+    )
+
+
 def build_formula(spec: DatasetSpec) -> str:
     """Model formula from a dataset spec: target ~ predictors.
 

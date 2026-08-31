@@ -206,13 +206,28 @@ Validation Workflow.
   `e2e_severity_diag_pred.py` 4 inversions — noted in that plan's Results)
   and re-executed green; `e2e_severity_model.py` unchanged. TC14
   deferred/manual (folded into the manual-walkthrough backlog item).
-- [ ] **Slice 2: fitted-model persistence** — `model_runs.model_path`
-  (ALTER TABLE migration), pickles in `models/` via
-  `results.save(remove_data=True)`, per-row "Load" action in the run-history
-  tables on 04/07 filling the kind's slot (`model_meta["source"]="loaded"`);
-  Diagnostics residual/QQ/calibration sections show an info hint for loaded
-  (data-stripped) models. See architecture slice 2 for the documented
-  `remove_data` limitation.
+- [x] **Slice 2: fitted-model persistence — DONE 2026-08-31 (uncommitted at
+  save).** `model_runs.model_path` via idempotent ALTER TABLE migration (old
+  rows keep NULL, excluded from loading); `storage.save_model` (deep-copies
+  before `save(remove_data=True)` — statsmodels strips IN PLACE, the live
+  session model must keep its residuals; unit-tested) + `storage.load_model`
+  (model + meta reconstructed from the run row, `source="loaded"`, kind
+  derived via new `glm.family_kind` — family sets are disjoint, no extra
+  column); pickles `models/run{id:04d}_{kind}_{family}.pickle` (gitignored,
+  `GLM_MODELS_DIR` override). Screens 04/07: fit → auto-save ("— saved for
+  reuse."; save failure → warning, row stays valid with NULL) + Load control
+  in Run history (selectbox of eligible runs + "Load saved model", friendly
+  errors, flash "— no refit needed."). Diagnostics: for `source=="loaded"`
+  one info hint after the coefficient section + `st.stop()` (also guards the
+  summary expander — `summary()` raises on data-stripped models, verified).
+  12 new unit tests (suite 121, 99.24% cov). E2E
+  `.planning/e2e-tests/model-persistence.md` TC1–TC9 PASSED via committed
+  runner `e2e/e2e_model_persistence.py` — headline: fresh session loads the
+  saved Poisson in 4.2s vs ~12s refit, prices immediately (36,102). TC11
+  deferred/manual (G4 adopted-spec what-if mismatch documented as accepted
+  pre-existing edge; save-failure warning; unreadable pickle). New e2e
+  lesson in `e2e/README.md`: expect the stMetric/stVegaLiteChart locator
+  before counting (widgets mount async after text deltas).
 - [ ] **Slice 3: `predict_pure_premium` + Pure Premium screen** — quote
   calculator (rating-factor widgets + exposure → expected frequency, expected
   claim amount, annual risk premium), premium breakdown table (freq × sev

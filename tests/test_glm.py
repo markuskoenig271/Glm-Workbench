@@ -167,3 +167,15 @@ class TestFitSeverityGlm:
             assert fitted[mask].mean() == pytest.approx(
                 gamma_claims.loc[mask, "ClaimAmount"].mean(), rel=1e-6
             )
+
+
+class TestFamilyKind:
+    def test_known_families(self) -> None:
+        assert glm.family_kind("poisson") == "frequency"
+        assert glm.family_kind("negative_binomial") == "frequency"
+        assert glm.family_kind("gamma") == "severity"
+        assert glm.family_kind("inverse_gaussian") == "severity"
+
+    def test_unknown_family_raises(self) -> None:
+        with pytest.raises(ValueError, match="Unknown family"):
+            glm.family_kind("tweedie")
