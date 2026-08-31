@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 
 import pricing_engine
-from pricing_engine import data, diagnostics, glm, prediction, report
+from pricing_engine import data, diagnostics, glm, report
 
 
 def test_version() -> None:
@@ -66,8 +66,6 @@ def test_stubs_fail_loudly(sample_portfolio: pd.DataFrame) -> None:
     """Unimplemented engine functions must raise, never silently return."""
     with pytest.raises(NotImplementedError):
         data.generate_chapter27_portfolio()
-    with pytest.raises(NotImplementedError):
-        prediction.predict_pure_premium(None, None, sample_portfolio)
     with pytest.raises(NotImplementedError):
         diagnostics.compare_with_true_model(None, {})
     with pytest.raises(NotImplementedError):

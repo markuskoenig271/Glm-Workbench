@@ -228,11 +228,33 @@ Validation Workflow.
   pre-existing edge; save-failure warning; unreadable pickle). New e2e
   lesson in `e2e/README.md`: expect the stMetric/stVegaLiteChart locator
   before counting (widgets mount async after text deltas).
-- [ ] **Slice 3: `predict_pure_premium` + Pure Premium screen** — quote
-  calculator (rating-factor widgets + exposure → expected frequency, expected
-  claim amount, annual risk premium), premium breakdown table (freq × sev
-  relativities), portfolio batch with honest captions (risk premium only;
-  freq ⊥ sev; −1.53% Gamma gap propagates; severity nearly flat).
+- [x] **Slice 3: `predict_pure_premium` + Pure Premium screen — DONE
+  2026-08-31 (uncommitted at save). → V3 quote calculator complete.**
+  Engine: `predict_pure_premium(freq, sev, policies, spec)` →
+  `expected_frequency`/`expected_claim_amount`/`pure_premium`/`expected_loss`
+  with a UNION missing-predictor check (`formula_columns`/`required_columns`
+  — the two models may be fitted on different predictor sets; friendly
+  ValueError instead of a patsy crash) + `premium_breakdown` (exact
+  multiplicative decomposition; numeric baselines rebased at the portfolio
+  MEDIAN per BA gap G4, so the reference premium is a plausible policy and a
+  median profile's factors are all 1.0). New `pages/08_Pure_Premium.py`:
+  guard ladder (incl. the G2 round-trip text when only the severity model is
+  missing — screen 07's kind guard would make "go to Severity Model" a dead
+  end), quote section (median-default widgets, exposure input, 3 metrics
+  with the Risk premium headline), breakdown table, portfolio batch
+  (`premium_batch` keys, isolated from screen 06's `predictions`) with the
+  HONEST metric set — no observed-cost comparison (BA gap G1: the severity
+  table covers only ~73% of claims; design docs corrected). Home (`app.py`):
+  per-slot model status + "ready to quote" line; sidebar-order/roadmap text
+  refreshed. 10 new unit tests (suite 132, 99.11% cov); scaffold stub test
+  removed per contract. E2E `.planning/e2e-tests/pure-premium.md` TC1–TC10
+  PASSED via committed runner `e2e/e2e_pure_premium.py`. Real-data findings:
+  total expected loss **€79.8M**, median-policy annual premium **€97.22**
+  (= the breakdown's reference premium), portfolio row 0 premium €301.82,
+  BonusMalus monotonicity confirmed, exposure scaling exact; a LOADED
+  severity model quotes identically (slice-2 interplay). TC12
+  deferred/manual (widget variations, G6 hint, G8 unseen level, CSV
+  contents, all-loaded variant).
 
 ## Tech feasibility — R Shiny EUC app (started 2026-08-02)
 

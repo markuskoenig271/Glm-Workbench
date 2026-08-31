@@ -282,6 +282,7 @@ with streamlit_app() as URL, sync_playwright() as p:
 
     page.get_by_role("link", name="Frequency Model").click()
     expect(page.get_by_text("Coefficients").first).to_be_visible()  # kept results, no guard
+    expect(page.locator("[data-testid='stMetric']").first).to_be_visible()
     assert page.locator("[data-testid='stMetric']").count() >= 4
     no_exception(page)
     print("TC9 PASS (frequency views back with NO refit — per-kind slots)")
@@ -297,6 +298,7 @@ with streamlit_app() as URL, sync_playwright() as p:
 
     page.get_by_role("link", name="Severity Model").click()
     expect(page.get_by_text("Coefficients").first).to_be_visible()  # kept results, no guard
+    expect(page.locator("[data-testid='stMetric']").first).to_be_visible()
     assert page.locator("[data-testid='stMetric']").count() >= 4
     no_exception(page)
     print("TC10 PASS")

@@ -30,6 +30,7 @@ uv run python e2e/e2e_severity_model.py  # + UI, ~2 min (three Gamma fits, one I
 uv run python e2e/e2e_severity_diag_pred.py # + UI, ~3 min (two Poisson + two Gamma fits, V2 slice 3)
 uv run python e2e/e2e_model_slots.py     # + UI, ~4 min (per-kind model slots, V3 slice 1)
 uv run python e2e/e2e_model_persistence.py # + UI, ~5 min (save/load fitted models, V3 slice 2)
+uv run python e2e/e2e_pure_premium.py    # + UI, ~8 min (quote calculator, V3 slice 3)
 ```
 
 Each script prints `... PASS` per test case and exits non-zero on the first failure.
@@ -55,4 +56,10 @@ Each script prints `... PASS` per test case and exits non-zero on the first fail
 - Streamlit mounts metric/chart widgets asynchronously after their text
   deltas: `expect` the `stMetric`/`stVegaLiteChart` LOCATOR itself before any
   `.count()` on it — a nearby text expect is not enough (and beware text that
-  also appears in selectbox option labels, e.g. "AIC").
+  also appears in selectbox option labels, e.g. "AIC"). Metric LABELS mount
+  after the metric element — assert them via
+  `expect(stMetric.filter(has_text=...))`, never a bare filtered count. For
+  widget-count assertions, `expect` the LAST expected widget (`nth(n-1)`) or
+  an element rendered below the whole group first.
+- `e2e_model_persistence.py` and `e2e_pure_premium.py` append 3 real runs +
+  3 gitignored pickles each.

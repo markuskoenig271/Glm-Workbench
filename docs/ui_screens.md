@@ -4,14 +4,16 @@
 [car-insurance.md](car-insurance.md) — on the **real freMTPL2 dataset** (the
 synthetic Chapter 27 dataset is backlogged). **V2 (approved 2026-07-29)** adds
 the Severity Model screen (8) and makes Diagnostics and Prediction kind-aware.
-**V3 (design proposed 2026-08-31)** adds the Pure Premium screen (9), a quote
-calculator on top of both fitted models; simulation and reporting screens
-arrive with later versions (roadmap at the bottom).
+**V3 (delivered 2026-08-31)** adds the Pure Premium screen (9), a quote
+calculator on top of both fitted models (per-kind slots + saved-model
+persistence); simulation and reporting screens arrive with later versions
+(roadmap at the bottom).
 
 ## 1. Home
 - Load the built-in dataset: **freMTPL2** (real French motor TPL, 678k policies);
   the Chapter 27 synthetic dataset joins later from the backlog
-- Workflow status
+- Workflow status: active dataset + (V3) per-slot model status lines and a
+  "ready to quote" note when both model slots are filled
 - Project summary + version roadmap
 
 ## 2. Data Import
@@ -85,7 +87,7 @@ arrive with later versions (roadmap at the bottom).
 - Kind guards: the Frequency Model screen points severity datasets here, and
   vice versa
 
-## 9. Pure Premium (V3 — design proposed 2026-08-31)
+## 9. Pure Premium (V3 — delivered 2026-08-31)
 
 - The **quote calculator**: "take out" a motor policy by entering its
   rating-factor values and see what it costs — the payoff screen where both
@@ -100,8 +102,12 @@ arrive with later versions (roadmap at the bottom).
 - Premium breakdown table: base premium × combined multiplicative relativity
   per rating factor (frequency and severity relativities shown separately) —
   how a tariff table falls out of two log-link GLMs
-- Portfolio batch: premium per policy, totals vs observed claim cost, premium
-  percentiles, CSV export
+- Portfolio batch: premium per policy; metrics total expected loss, total
+  expected claims (cross-checkable against Prediction / observed 36,102),
+  average annual premium, premium percentiles; CSV export. No observed-cost
+  comparison — the policy table records claim counts, not amounts, and the
+  severity table covers only ~73% of the claims (honesty correction
+  2026-08-31)
 - Honest captions: risk premium only (no expenses/loadings/profit);
   frequency ⊥ severity given the rating factors; the Gamma balance gap
   (−1.53%) propagates into the total; severity is nearly flat (BonusMalus is

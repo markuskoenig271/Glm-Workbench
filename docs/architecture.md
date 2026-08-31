@@ -234,7 +234,7 @@ Delivered in three slices, each through the Change Validation Workflow:
    `prediction.predict_severity` (expected claim amount per row, no exposure
    scaling) + kind-aware Prediction page (single-claim what-if, batch, CSV).
 
-## V3 — Pure premium design (proposed 2026-08-31)
+## V3 — Pure premium design (approved and delivered 2026-08-31)
 
 Framing (Markus, 2026-08-31): the new screen is a **quote calculator** — you
 "take out" a motor policy by entering its rating-factor values and get the
@@ -306,10 +306,19 @@ to compute premiums, and fitted models survive a browser refresh.
   `expected_claim_amount` (severity model applied to the same rating factors),
   `pure_premium = expected_frequency * expected_claim_amount` (annual, per
   unit of exposure) and `expected_loss = pure_premium * Exposure` (the
-  policy-period expectation). Missing-predictor ValueError like the existing
-  predictors — note both models' predictors must exist in the policy frame
-  (engineered columns used by either model must be built on the loaded
-  portfolio; the page surfaces this as a friendly hint).
+  policy-period expectation). The missing-predictor ValueError covers the
+  **union** of the spec's predictors and BOTH models' formula columns
+  (`formula_columns` / `required_columns` helpers — the two models may have
+  been fitted on different predictor sets; formulas are plain main effects,
+  so the RHS terms are column names). Engineered columns used by either model
+  must be built on the loaded portfolio; the page surfaces this as a friendly
+  hint. `premium_breakdown(freq_model, sev_model, profile, portfolio, spec)`
+  decomposes one quote multiplicatively: premium = base × one factor per
+  predictor (exact — log links, no interactions), each factor the ratio
+  against a reference value (categorical: the patsy reference level; numeric:
+  the **portfolio median**, so the reference premium reads as a plausible
+  policy rather than the impossible all-zero profile — decision 2026-08-31,
+  BA gap G4).
 - UI `pages/08_Pure_Premium.py` (screen 9 in ui_screens.md):
   - Guards: frequency-kind dataset loaded; **both** model slots filled —
     freshly fitted or loaded from the run history via slice 2 (else point to
@@ -325,13 +334,26 @@ to compute premiums, and fitted models survive a browser refresh.
     severity relativities shown separately. Teaches how a tariff table falls
     out of two GLMs.
   - **Portfolio batch**: premium for every loaded policy; summary metrics
-    (total expected loss vs observed total claim cost, average premium,
-    premium percentiles), preview, kind-tagged CSV download.
+    **total expected loss, total expected claims (cross-checkable against the
+    Prediction screen / observed 36,102), average annual premium, and premium
+    percentiles**. NO observed-cost comparison: a frequency portfolio records
+    claim counts, not amounts, and freMTPL2's severity table covers only
+    26,444 of the 36,102 claims (~73%) — a like-for-like observed total does
+    not exist in this data (correction 2026-08-31, BA gap G1: the originally
+    designed "vs observed total claim cost" metric is not honestly
+    computable). Preview + CSV download; the batch lives in its own session
+    keys (`premium_batch`), isolated from screen 7's `predictions`.
   - Honest captions: risk premium only (no expenses, loadings, or profit);
     frequency ⊥ severity assumed given the rating factors; the log-link
-    Gamma's balance gap (−1.53% on freMTPL2) propagates into the premium
-    total; with 41/42 severity terms insignificant, μ(x) is nearly flat —
-    most tariff differentiation comes from the frequency model.
+    Gamma's balance gap (≈ −1.5% on the default freMTPL2 fit) propagates into
+    the expected-loss total; with 41/42 severity terms insignificant, μ(x) is
+    nearly flat — most tariff differentiation comes from the frequency model.
+  - Guard subtlety (BA gap G2): when only the severity model is missing, the
+    guard spells out the dataset round trip (load severity data → fit/load on
+    Severity Model → reload the frequency data; slots survive the switch) —
+    screen 8's own kind guard would otherwise make "go to Severity Model" a
+    dead end. Home (`app.py`) shows per-slot model status and a
+    "ready to quote" line when both slots are filled.
 - No new storage in this slice: quotes and batches are not persisted; models
   are persisted by slice 2.
 
@@ -339,7 +361,7 @@ to compute premiums, and fitted models survive a browser refresh.
 
 1. **V1** — Frequency GLM (Chapter 27 example) — **complete 2026-07-25**
 2. **V2** — Severity GLM (Gamma) — **complete 2026-08-25** (slices 1–3)
-3. **V3** — Pure Premium (Frequency × Severity) — **design proposed 2026-08-31**
+3. **V3** — Pure Premium (Frequency × Severity) — **complete 2026-08-31** (slices 1–3)
    - **V3.x** — Aggregate loss simulation (compound Poisson Monte Carlo, see Modeling)
 4. **V4** — Generic pricing workbench for arbitrary portfolios
 
