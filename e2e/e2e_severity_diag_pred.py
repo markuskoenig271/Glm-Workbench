@@ -80,15 +80,15 @@ ovp = observed_vs_predicted(df, spec, model, groups=10)
 assert len(ovp) <= 10
 assert ovp["exposure"].sum() == 26_444, ovp["exposure"].sum()
 assert (ovp["exposure"] > 0).all()
-weighted_pred = (ovp["predicted_frequency"] * ovp["exposure"]).sum() / 26_444
+weighted_pred = (ovp["predicted_mean"] * ovp["exposure"]).sum() / 26_444
 assert abs(weighted_pred - 2_230.9) / 2_230.9 < 0.01, weighted_pred
-assert (ovp["predicted_frequency"] > 500).all(), "values ~0.1 would mean an exposure divisor"
-assert (np.diff(ovp["predicted_frequency"]) >= 0).all()
-assert ovp["observed_frequency"].between(500, 10_000).all(), ovp["observed_frequency"].tolist()
+assert (ovp["predicted_mean"] > 500).all(), "values ~0.1 would mean an exposure divisor"
+assert (np.diff(ovp["predicted_mean"]) >= 0).all()
+assert ovp["observed_mean"].between(500, 10_000).all(), ovp["observed_mean"].tolist()
 print(
     f"TC2 PASS bands={len(ovp)} weighted_pred={weighted_pred:.1f} "
-    f"observed_band_range={ovp['observed_frequency'].min():.0f}-"
-    f"{ovp['observed_frequency'].max():.0f}"
+    f"observed_band_range={ovp['observed_mean'].min():.0f}-"
+    f"{ovp['observed_mean'].max():.0f}"
 )
 
 # --- UI TCs -------------------------------------------------------------------
@@ -119,15 +119,17 @@ with streamlit_app() as URL, sync_playwright() as p:
     browser = p.chromium.launch()
 
     # TC3 — fresh-session guards on both pages (separate contexts; goto is the point)
+    # V3 slice 1: no dataset loaded means no kind to select a model by — the pages
+    # now show the dataset-first guard (the V2 dual "Fit a model first" wording retired)
     for page_path in ("Diagnostics", "Prediction"):
         ctx = browser.new_context()
         pg = ctx.new_page()
         pg.goto(f"{URL}/{page_path}")
-        expect(pg.get_by_text("Fit a model first").first).to_be_visible()
+        expect(pg.get_by_text("Load a dataset first").first).to_be_visible()
+        assert pg.get_by_text("Fit a model first").count() == 0  # V2 wording gone
         assert pg.get_by_text("loaded dataset is a").count() == 0  # not a mismatch guard
         assert pg.locator("[data-testid='stMetric']").count() == 0
         assert pg.get_by_role("button", name="Predict", exact=True).count() == 0
-        assert pg.get_by_text("Load a dataset first").count() == 0
         no_exception(pg)
         ctx.close()
     print("TC3 PASS")
@@ -178,17 +180,20 @@ with streamlit_app() as URL, sync_playwright() as p:
     no_exception(page)
     print("TC4 PASS (frequency batch left in session state)")
 
-    # TC5 — kind mismatch, direction B: frequency model + severity dataset
+    # TC5 — severity dataset loaded while the severity slot is still empty:
+    # V3 slice 1 kind guard (the V2 mismatch guard is impossible by construction)
     load_builtin(page, "severity", "26,444 rows")
     page.get_by_role("link", name="Diagnostics").click()
-    expect(page.get_by_text(MISMATCH_B).first).to_be_visible()
+    expect(page.get_by_text("Fit a severity model first").first).to_be_visible()
+    assert page.get_by_text(MISMATCH_B).count() == 0  # retired V2 guard
     assert page.locator("[data-testid='stMetric']").count() == 0
     assert page.locator("[data-testid='stVegaLiteChart']").count() == 0
     assert page.get_by_text("Observed vs Predicted").count() == 0
     no_exception(page)
 
     page.get_by_role("link", name="Prediction").click()
-    expect(page.get_by_text(MISMATCH_B).first).to_be_visible()
+    expect(page.get_by_text("Fit a severity model first").first).to_be_visible()
+    assert page.get_by_text(MISMATCH_B).count() == 0  # retired V2 guard
     assert page.get_by_role("button", name="Predict", exact=True).count() == 0
     assert page.get_by_text("Single policy").count() == 0
     assert page.get_by_text("Single claim").count() == 0
@@ -277,24 +282,27 @@ with streamlit_app() as URL, sync_playwright() as p:
     batch_values = [el.inner_text() for el in page.locator("[data-testid='stMetricValue']").all()]
     print(f"TC8 PASS single-claim metric={single_metric!r} batch metrics={batch_values}")
 
-    # TC9 — kind mismatch, direction A: severity model + frequency dataset
+    # TC9 — frequency dataset loaded again: with per-kind slots (V3 slice 1) the
+    # Poisson model from TC4 is STILL ALIVE — frequency views render with NO refit
+    # (in V2 this exact step showed the mismatch guard)
     load_builtin(page, "frequency", "678,013 rows")
     page.get_by_role("link", name="Diagnostics").click()
-    expect(page.get_by_text(MISMATCH_A).first).to_be_visible()
-    assert page.locator("[data-testid='stMetric']").count() == 0
-    assert page.locator("[data-testid='stVegaLiteChart']").count() == 0
+    expect(page.get_by_text("Model summary").first).to_be_visible(timeout=60000)
+    assert page.get_by_text(MISMATCH_A).count() == 0  # retired V2 guard
+    assert page.get_by_text("claim frequency").count() >= 1
+    assert page.get_by_text("claim amount").count() == 0
+    assert page.locator("[data-testid='stMetric']").count() >= 4
     no_exception(page)
 
     page.get_by_role("link", name="Prediction").click()
-    expect(page.get_by_text(MISMATCH_A).first).to_be_visible()
-    assert page.get_by_role("button", name="Predict", exact=True).count() == 0
+    expect(page.get_by_text("Single policy").first).to_be_visible()
+    assert page.get_by_text(MISMATCH_A).count() == 0  # retired V2 guard
     assert page.get_by_text("Single claim").count() == 0
-    assert page.get_by_text("Single policy").count() == 0
-    assert page.get_by_text("Total expected claim amount").count() == 0
+    assert page.get_by_text("Total expected claim amount").count() == 0  # stale sev batch hidden
     no_exception(page)
-    print("TC9 PASS")
+    print("TC9 PASS (frequency model survived the severity fit — per-kind slots)")
 
-    # TC10 — reverse slot-swap restores the frequency views
+    # TC10 — refitting frequency updates its slot; views still render
     page.get_by_role("link", name="Frequency Model").click()
     page.get_by_role("button", name="Fit model").click()
     expect(page.get_by_text("Model fitted and recorded").first).to_be_visible(timeout=180000)

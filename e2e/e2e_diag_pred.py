@@ -50,10 +50,10 @@ ovp = observed_vs_predicted(df, spec, model, groups=10)
 assert len(ovp) <= 10
 total_exposure = df[spec.offset].sum()
 assert abs(ovp["exposure"].sum() - total_exposure) / total_exposure < 0.01
-weighted_pred = (ovp["predicted_frequency"] * ovp["exposure"]).sum() / ovp["exposure"].sum()
+weighted_pred = (ovp["predicted_mean"] * ovp["exposure"]).sum() / ovp["exposure"].sum()
 assert abs(weighted_pred - 0.1007) / 0.1007 < 0.01, weighted_pred
-assert (np.diff(ovp["predicted_frequency"]) >= 0).all()
-assert ovp["observed_frequency"].iloc[-1] > ovp["observed_frequency"].iloc[0]
+assert (np.diff(ovp["predicted_mean"]) >= 0).all()
+assert ovp["observed_mean"].iloc[-1] > ovp["observed_mean"].iloc[0]
 diag_seconds = time.perf_counter() - t0
 assert diag_seconds < 10, f"diagnostics too slow: {diag_seconds:.1f}s"
 print(f"DIAG ENGINE TC PASS ({diag_seconds:.2f}s, weighted predicted freq {weighted_pred:.4f})")
@@ -96,13 +96,14 @@ expect.set_options(timeout=20000)
 with streamlit_app() as URL, sync_playwright() as p:
     browser = p.chromium.launch()
 
-    # Guard TCs — fresh contexts
+    # Guard TCs — fresh contexts (V3 slice 1: no dataset loaded means no kind to
+    # select a model by, so the dataset-first guard shows)
     for page_path in ("Diagnostics", "Prediction"):
         ctx = browser.new_context()
         pg = ctx.new_page()
         pg.goto(f"{URL}/{page_path}")
-        expect(pg.get_by_text("Fit a model first").first).to_be_visible()
-        assert pg.get_by_text("Load a dataset first").count() == 0
+        expect(pg.get_by_text("Load a dataset first").first).to_be_visible()
+        assert pg.get_by_text("Fit a model first").count() == 0  # V2 wording gone
         assert pg.locator("[data-testid='stException']").count() == 0
         ctx.close()
     print("GUARD TCs PASS (both pages)")

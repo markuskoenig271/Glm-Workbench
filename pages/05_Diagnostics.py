@@ -51,25 +51,23 @@ WORDING = {
 
 st.title("Diagnostics")
 
-if "model" not in st.session_state:
-    st.info("Fit a model first — go to Frequency Model or Severity Model.")
+if "portfolio" not in st.session_state:
+    st.info("Load a dataset first — go to Data Import.")
     st.stop()
 
-model = st.session_state["model"]
-meta = st.session_state["model_meta"]
-kind = meta["kind"]
-words = WORDING[kind]
 portfolio = st.session_state["portfolio"]
 spec = st.session_state["spec"]
-
-if spec.kind != kind:
-    other = "Severity Model" if spec.kind == "severity" else "Frequency Model"
-    st.info(
-        f"The active model is a {kind} model but the loaded dataset is a {spec.kind} "
-        f"dataset — fit a {spec.kind} model on it first (go to {other}) or reload the "
-        f"{kind} dataset."
-    )
+# per-kind model slots (docs/architecture.md V3 slice 1): the loaded dataset's kind
+# selects the model, so dataset and model always match by construction
+kind = spec.kind
+if f"model_{kind}" not in st.session_state:
+    screen = "Frequency Model" if kind == "frequency" else "Severity Model"
+    st.info(f"Fit a {kind} model first — go to {screen}.")
     st.stop()
+
+model = st.session_state[f"model_{kind}"]
+meta = st.session_state[f"model_{kind}_meta"]
+words = WORDING[kind]
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("AIC", f"{meta['aic']:,.0f}")
@@ -160,16 +158,16 @@ if meta["n_obs"] != len(portfolio):
 else:
     st.caption(words["calibration_note"])
     ovp = diagnostics.observed_vs_predicted(portfolio, spec, model)
-    # engine columns are named per unit of the offset (frequency); with no offset
+    # engine columns are means per unit of the offset (frequency); with no offset
     # (severity) they are per-claim averages, i.e. average claim amounts
     ovp_long = ovp.melt(
         id_vars=["group", "exposure"],
-        value_vars=["observed_frequency", "predicted_frequency"],
+        value_vars=["observed_mean", "predicted_mean"],
         var_name="series",
         value_name="value",
     )
     ovp_long["series"] = ovp_long["series"].map(
-        {"observed_frequency": "Observed", "predicted_frequency": "Predicted"}
+        {"observed_mean": "Observed", "predicted_mean": "Predicted"}
     )
     ovp_chart = (
         alt.Chart(ovp_long)
@@ -202,8 +200,8 @@ else:
             ovp = ovp.rename(
                 columns={
                     "exposure": "claims",
-                    "observed_frequency": "observed_avg_claim_amount",
-                    "predicted_frequency": "predicted_avg_claim_amount",
+                    "observed_mean": "observed_avg_claim_amount",
+                    "predicted_mean": "predicted_avg_claim_amount",
                 }
             )
         st.dataframe(ovp.round(4))

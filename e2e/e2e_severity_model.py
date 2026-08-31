@@ -223,8 +223,8 @@ with streamlit_app() as URL, sync_playwright() as p:
     assert page.locator("[data-testid='stException']").count() == 0
     print("TC6 PASS (automated combobox route: click + type + Enter)")
 
-    # TC7 — single-slot stale state: 05/06 RENDER kind-aware (slice 3 inverted the
-    # interim guards), no crash on 04
+    # TC7 — 05/06 RENDER kind-aware for the severity model (its per-kind slot is
+    # filled and the severity dataset is loaded), no crash on 04
     page.get_by_role("link", name="Diagnostics").click()
     expect(page.get_by_text("Model summary").first).to_be_visible(timeout=60000)
     assert page.get_by_text("next slice").count() == 0

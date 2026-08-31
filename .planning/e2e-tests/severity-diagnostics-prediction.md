@@ -555,3 +555,22 @@ not deferred); TC12 deferred/manual.**
 - TC12 DEFERRED/manual per plan (widget variations, pearson radio, CSV
   contents, IG-failure-keeps-Gamma-in-slot) — added to the manual-walkthrough
   backlog item in `TODO.md`.
+
+## V3 slice 1 inversions (2026-08-31, per-kind model slots)
+
+The single active-model slot this plan tested was split into per-kind slots
+(`.planning/e2e-tests/per-kind-model-slots.md`); the committed runner was
+updated accordingly and re-executed green on 2026-08-31:
+
+- TC3 INVERTED — a fresh session now shows the dataset-first guard
+  (`Load a dataset first — go to Data Import.`); the dual "Fit a model
+  first" wording is retired.
+- TC5 INVERTED — frequency model + severity dataset now shows the kind guard
+  `Fit a severity model first — go to Severity Model.`; the mismatch guard
+  text is retired (asserted absent).
+- TC9 INVERTED — with both kinds fitted, loading the frequency dataset now
+  RENDERS the kept frequency views without a refit (this was the V2
+  mismatch-guard state; it is the V3 headline behavior).
+- TC2 columns renamed `observed_frequency`/`predicted_frequency` →
+  `observed_mean`/`predicted_mean` (values unchanged: weighted_pred 2,230.9,
+  bands 1,586–5,453).

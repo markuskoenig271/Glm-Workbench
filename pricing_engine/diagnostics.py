@@ -65,10 +65,12 @@ def qq_data(model: Any, kind: str = "deviance", points: int = 100) -> pd.DataFra
 def observed_vs_predicted(
     df: pd.DataFrame, spec: DatasetSpec, model: Any, groups: int = 10
 ) -> pd.DataFrame:
-    """Calibration by predicted-frequency band: observed vs predicted per band.
+    """Calibration by predicted-mean band: observed vs predicted per band.
 
-    Policies are grouped into quantile bands of predicted frequency; per band
-    the exposure-weighted observed and predicted frequencies are compared.
+    Rows are grouped into quantile bands of the predicted mean response per
+    unit of offset (claim frequency with an exposure offset; with offset None
+    the divisor is the row count, i.e. per-claim averages for severity data);
+    per band the weighted observed and predicted means are compared.
     """
     fitted = np.asarray(model.fittedvalues)
     exposure = df[spec.offset].to_numpy() if spec.offset is not None else np.ones(len(df))
@@ -92,8 +94,8 @@ def observed_vs_predicted(
         {
             "group": grouped.index.astype(str),
             "exposure": grouped["exposure"].to_numpy(),
-            "observed_frequency": (grouped["observed"] / grouped["exposure"]).to_numpy(),
-            "predicted_frequency": (grouped["predicted"] / grouped["exposure"]).to_numpy(),
+            "observed_mean": (grouped["observed"] / grouped["exposure"]).to_numpy(),
+            "predicted_mean": (grouped["predicted"] / grouped["exposure"]).to_numpy(),
         }
     )
     return result.reset_index(drop=True)

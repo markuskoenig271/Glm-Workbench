@@ -80,17 +80,17 @@ class TestObservedVsPredicted:
         assert list(ovp.columns) == [
             "group",
             "exposure",
-            "observed_frequency",
-            "predicted_frequency",
+            "observed_mean",
+            "predicted_mean",
         ]
         assert len(ovp) <= 5
         assert ovp["exposure"].sum() == pytest.approx(group_portfolio["Exposure"].sum(), rel=0.01)
         # in-sample Poisson with intercept: exposure-weighted predicted == observed overall
-        total_pred = (ovp["predicted_frequency"] * ovp["exposure"]).sum()
-        total_obs = (ovp["observed_frequency"] * ovp["exposure"]).sum()
+        total_pred = (ovp["predicted_mean"] * ovp["exposure"]).sum()
+        total_obs = (ovp["observed_mean"] * ovp["exposure"]).sum()
         assert total_pred == pytest.approx(total_obs, rel=0.01)
         # bands are ordered by predicted frequency
-        assert (np.diff(ovp["predicted_frequency"]) >= 0).all()
+        assert (np.diff(ovp["predicted_mean"]) >= 0).all()
 
 
 class TestSeverityDiagnostics:
@@ -102,15 +102,15 @@ class TestSeverityDiagnostics:
         ovp = diagnostics.observed_vs_predicted(
             severity_portfolio, SEVERITY_SPEC, fitted_severity_model, groups=4
         )
-        # offset None -> exposure is the row count -> the "frequency" columns are
+        # offset None -> exposure is the row count -> the mean columns are
         # per-claim averages, i.e. observed vs predicted average claim amount
         assert ovp["exposure"].sum() == 2_000
-        weighted_pred = (ovp["predicted_frequency"] * ovp["exposure"]).sum() / 2_000
+        weighted_pred = (ovp["predicted_mean"] * ovp["exposure"]).sum() / 2_000
         assert weighted_pred == pytest.approx(
             float(np.asarray(fitted_severity_model.fittedvalues).mean())
         )
-        assert (np.diff(ovp["predicted_frequency"]) >= 0).all()
-        assert ovp["observed_frequency"].iloc[-1] > ovp["observed_frequency"].iloc[0]
+        assert (np.diff(ovp["predicted_mean"]) >= 0).all()
+        assert ovp["observed_mean"].iloc[-1] > ovp["observed_mean"].iloc[0]
 
     def test_residuals_and_criteria(self, fitted_severity_model) -> None:  # type: ignore[no-untyped-def]
         for kind in diagnostics.RESIDUAL_KINDS:

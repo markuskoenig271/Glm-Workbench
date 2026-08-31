@@ -7,24 +7,21 @@ from pricing_engine import prediction
 
 st.title("Prediction")
 
-if "model" not in st.session_state:
-    st.info("Fit a model first — go to Frequency Model or Severity Model.")
+if "portfolio" not in st.session_state:
+    st.info("Load a dataset first — go to Data Import.")
     st.stop()
 
-model = st.session_state["model"]
-meta = st.session_state["model_meta"]
-kind = meta["kind"]
 portfolio = st.session_state["portfolio"]
 spec = st.session_state["spec"]
-
-if spec.kind != kind:
-    other = "Severity Model" if spec.kind == "severity" else "Frequency Model"
-    st.info(
-        f"The active model is a {kind} model but the loaded dataset is a {spec.kind} "
-        f"dataset — fit a {spec.kind} model on it first (go to {other}) or reload the "
-        f"{kind} dataset."
-    )
+# per-kind model slots (docs/architecture.md V3 slice 1): the loaded dataset's kind
+# selects the model, so dataset and model always match by construction
+kind = spec.kind
+if f"model_{kind}" not in st.session_state:
+    screen = "Frequency Model" if kind == "frequency" else "Severity Model"
+    st.info(f"Fit a {kind} model first — go to {screen}.")
     st.stop()
+
+model = st.session_state[f"model_{kind}"]
 
 # --- single what-if ------------------------------------------------------------
 
@@ -100,7 +97,8 @@ if st.button(batch_label):
     st.session_state["predictions_kind"] = kind
     st.session_state["predictions_csv"] = batch.to_csv(index=False).encode()
 
-# a batch from the other model kind (single active-model slot) is never shown here
+# a stale batch from the other kind (dataset switched since it was computed) is never
+# shown here
 if "predictions" in st.session_state and st.session_state.get("predictions_kind") == kind:
     batch = st.session_state["predictions"]
     col1, col2, col3 = st.columns(3)

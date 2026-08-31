@@ -49,10 +49,10 @@ if st.button("Fit model", type="primary"):
         )
     else:
         info = diagnostics.information_criteria(model)
-        # single active-model slot (docs/architecture.md V2): fitting replaces any
-        # frequency model
-        st.session_state["model"] = model
-        st.session_state["model_meta"] = {
+        # per-kind model slot (docs/architecture.md V3 slice 1): a frequency model
+        # may coexist
+        st.session_state["model_severity"] = model
+        st.session_state["model_severity_meta"] = {
             "formula": formula,
             "family": family,
             "kind": "severity",
@@ -75,9 +75,9 @@ if st.button("Fit model", type="primary"):
             )
         st.success(f"Model fitted and recorded (AIC {info['aic']:,.0f}).")
 
-if "model" in st.session_state and st.session_state["model_meta"]["kind"] == "severity":
-    model = st.session_state["model"]
-    meta = st.session_state["model_meta"]
+if "model_severity" in st.session_state:
+    model = st.session_state["model_severity"]
+    meta = st.session_state["model_severity_meta"]
 
     col1, col2, col3, col4 = st.columns(4)
     col1.metric("AIC", f"{meta['aic']:,.0f}")

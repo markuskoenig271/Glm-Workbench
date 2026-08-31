@@ -181,6 +181,44 @@ slices, each through the Change Validation Workflow.
   fitter; consider a log-scale/binning improvement for the heavy-tailed
   ClaimAmount histogram (first bin holds >90% — known artifact, TC4).
 
+## V3 — pure premium (design approved 2026-08-31; docs/architecture.md "V3 — Pure premium design")
+
+Markus' decisions 2026-08-31: quote-calculator framing for the new screen;
+model selection on 05/06 by the loaded dataset's kind (no picker); premium
+breakdown in the first cut; FULL fitted-model persistence (save on fit, load
+from run history) as its own slice. Three slices, each through the Change
+Validation Workflow.
+
+- [x] **Slice 1: per-kind model slots — DONE 2026-08-31 (uncommitted at
+  first save).** Session slots `model_frequency`/`model_severity` (+`_meta`)
+  replace `model`/`model_meta`; 04/07 write their own slot (fitting no longer
+  evicts the other kind); 05/06 select the model by `spec.kind` with the new
+  guard order (dataset-first `Load a dataset first — go to Data Import.`,
+  then `Fit a <kind> model first — go to <screen>.`) — the V2 kind-mismatch
+  guard is retired (impossible by construction). Engine rename
+  `observed_vs_predicted`: `observed_frequency`/`predicted_frequency` →
+  `observed_mean`/`predicted_mean` (value-neutral; anchors 0.1007 / 2,230.9 /
+  bands 1,586–5,453 unchanged). 109 unit tests, 99.43% cov; ruff + mypy
+  clean. E2E `.planning/e2e-tests/per-kind-model-slots.md` TC1–TC12 PASSED
+  via committed runner `e2e/e2e_model_slots.py` (TC9 headline: dataset switch
+  flips 05/06 between both live models without refits); regression runners
+  updated for the retired behaviors (`e2e_diag_pred.py` 2 updates,
+  `e2e_severity_diag_pred.py` 4 inversions — noted in that plan's Results)
+  and re-executed green; `e2e_severity_model.py` unchanged. TC14
+  deferred/manual (folded into the manual-walkthrough backlog item).
+- [ ] **Slice 2: fitted-model persistence** — `model_runs.model_path`
+  (ALTER TABLE migration), pickles in `models/` via
+  `results.save(remove_data=True)`, per-row "Load" action in the run-history
+  tables on 04/07 filling the kind's slot (`model_meta["source"]="loaded"`);
+  Diagnostics residual/QQ/calibration sections show an info hint for loaded
+  (data-stripped) models. See architecture slice 2 for the documented
+  `remove_data` limitation.
+- [ ] **Slice 3: `predict_pure_premium` + Pure Premium screen** — quote
+  calculator (rating-factor widgets + exposure → expected frequency, expected
+  claim amount, annual risk premium), premium breakdown table (freq × sev
+  relativities), portfolio batch with honest captions (risk premium only;
+  freq ⊥ sev; −1.53% Gamma gap propagates; severity nearly flat).
+
 ## Tech feasibility — R Shiny EUC app (started 2026-08-02)
 
 (History below refers to the original `R/` folder; it was renamed to
