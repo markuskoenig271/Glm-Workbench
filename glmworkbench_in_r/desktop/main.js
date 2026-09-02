@@ -7,8 +7,10 @@
 // start the shell checks (a) the CRAN packages glmworkbenchR depends on and
 // (b) that the bundled glmworkbenchR version is installed; anything missing
 // is installed automatically into the user's package library (first-run
-// setup with a live progress window). glmworkbenchR is installed from the
-// bundled package source (pure R, no build tools needed). R lookup order:
+// setup with a live progress window) from a PINNED dated CRAN snapshot
+// (see CRAN_SNAPSHOT below) so all users get identical package versions.
+// glmworkbenchR is installed from the bundled package source (pure R, no
+// build tools needed). R lookup order:
 //   1. r-portable/ bundled in the app resources (zero-install EUC distribution)
 //   2. r-portable/ next to the portable .exe (PORTABLE_EXECUTABLE_DIR)
 //   3. GLM_WORKBENCH_RSCRIPT environment variable
@@ -31,6 +33,16 @@ const REQUIRED_PACKAGES = [
   'shiny', 'bslib', 'DT', 'nanoparquet', 'rlang', 'tidyselect',
   'dplyr', 'tidyr', 'purrr', 'readr', 'tibble', 'golem', 'config',
 ];
+
+// Package repository the first-run setup installs from. A DATED Posit Package
+// Manager snapshot instead of "latest CRAN", so every user gets the exact
+// same package versions regardless of when they first start the app (the
+// team's chosen alternative to renv — pinning without needing Rtools: P3M
+// snapshots serve Windows binaries for current R versions). Bump the date
+// deliberately, together with a re-test, when newer packages are wanted.
+// Override for proxies / internal mirrors: set GLM_WORKBENCH_CRAN.
+const CRAN_SNAPSHOT = 'https://packagemanager.posit.co/cran/2026-09-01';
+const CRAN_REPO = process.env.GLM_WORKBENCH_CRAN || CRAN_SNAPSHOT;
 
 let rProcess = null;
 let installerProcess = null;
@@ -325,7 +337,7 @@ function runInstaller(rscript, missing, installPkg) {
     `lib <- Sys.getenv('R_LIBS_USER')`,
     `dir.create(lib, recursive = TRUE, showWarnings = FALSE)`,
     `.libPaths(c(lib, .libPaths()))`,
-    `options(repos = c(CRAN = 'https://cloud.r-project.org'))`,
+    `options(repos = c(CRAN = '${CRAN_REPO}'))`,
   ];
   if (missing.length > 0) {
     const quoted = missing.map((p) => `'${p}'`).join(',');

@@ -194,8 +194,13 @@ Shiny runtime ships with the `shiny` package and serves the app to any
 browser). One-time package install:
 
 ```
-Rscript -e "install.packages(c('shiny','bslib','DT','nanoparquet','dplyr','tidyr','purrr','readr','tibble','rlang','tidyselect','golem','config','pkgload'), repos='https://cloud.r-project.org')"
+Rscript -e "install.packages(c('shiny','bslib','DT','nanoparquet','dplyr','tidyr','purrr','readr','tibble','rlang','tidyselect','golem','config','pkgload'), repos='https://packagemanager.posit.co/cran/2026-09-01')"
 ```
+
+(The repo URL is a **dated Posit Package Manager snapshot** — the same one the
+Electron exe pins (see below) — so manual installs get the same package
+versions as the exe's auto-setup. Plain `https://cloud.r-project.org` works
+too if you just want latest CRAN.)
 
 Then double-click one of the launchers (both find the installed R via the
 registry, with a Program Files fallback; both use the installed
@@ -248,7 +253,12 @@ like Python. What exists, in increasing order of packaging effort:
    binaries for the dependencies, the bundled package source for
    `glmworkbenchR` itself — pure R, so no Rtools needed; first-run setup
    window with live progress log; resumes if interrupted; re-runs when the
-   exe ships a new package version). If R itself is missing, a self-help
+   exe ships a new package version). **Package versions are pinned:** the
+   auto-install pulls from a dated Posit Package Manager snapshot
+   (`CRAN_SNAPSHOT` in `main.js`, overridable per machine with the
+   `GLM_WORKBENCH_CRAN` env var for proxies/internal mirrors), so every
+   user gets identical versions no matter when they first run the exe;
+   bump the snapshot date deliberately with a re-test. If R itself is missing, a self-help
    page with copy-pasteable instructions is shown instead of the app. The
    freMTPL2 parquet files are bundled (`GLM_WORKBENCH_DATA_DIR` points at
    them), so the built-in datasets work on target machines. Dev run:
@@ -273,8 +283,15 @@ like Python. What exists, in increasing order of packaging effort:
    that reads local parquet and writes a local DB.
 
 Recommended for a real EUC rollout: **option 2** (R-Portable + launcher) for
-zero-install, or option 1 if a managed R install is acceptable. Pin package
-versions with `renv` (`renv::init()` in this folder) before sharing.
+zero-install, or option 1 if a managed R install is acceptable.
+
+**Version pinning (decided 2026-09-02):** the exe pins its installs to a
+dated Posit Package Manager snapshot instead of using `renv`. Rationale:
+`renv::restore()` of older versions often has no CRAN binaries left and
+falls back to source compilation — that would break the "R + CRAN access,
+nothing more" end-user contract (no Rtools). A dated P3M snapshot gives the
+same determinism as a lockfile, served as binaries for current R versions,
+and the user never sees it. `renv` remains a dev-machine option only.
 
 ## Deliberate parallels to the Streamlit app
 
