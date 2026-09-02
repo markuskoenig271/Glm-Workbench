@@ -383,8 +383,22 @@ Validation Workflow.
   `.Rproj.user` to the root `.gitignore` and rewrote `glmworkbenchR.Rproj`
   (harmless, committed with the session save). Longer-term: a current R
   (4.4/4.5) + `renv` pinning would remove the source-compile prompts.
-- [ ] Feasibility follow-ups when Markus decides: custom app icon; `renv`
-  (or DESCRIPTION-style) version pinning before wider sharing; bundle
+- [x] **Version pinning — DECIDED + DONE 2026-09-02 (Markus).** No `renv`:
+  the Electron exe's auto-install now pins to a **dated Posit Package
+  Manager snapshot** (`CRAN_SNAPSHOT = …/cran/2026-09-01` in
+  `desktop/main.js`, env override `GLM_WORKBENCH_CRAN` for proxies/internal
+  mirrors) instead of latest CRAN — same determinism as a lockfile, served
+  as binaries for current R versions, keeps the "R + CRAN access, nothing
+  more" end-user contract (no Rtools). Rationale + snapshot-bump rule
+  documented in `glmworkbench_in_r/README.md` (EUC section); manual-install
+  line there uses the same snapshot URL. `renv` stays a dev-machine-only
+  option. Verified: snapshot serves 19,147 Windows binaries even for the
+  dev laptop's R 4.2.1; installer-path scratch-lib install green; dev smoke
+  SMOKE_OK; **distributables rebuilt** (`npm run dist`, portable 74.8 MB +
+  NSIS 75 MB, 2026-09-02) with packaged-exe smoke exit 0, no orphan
+  Rscript, snapshot URL confirmed inside `app.asar`. Code UNCOMMITTED at
+  save (`desktop/main.js`, `README.md`) — awaiting Markus' commit call.
+- [ ] Feasibility follow-ups when Markus decides: custom app icon; bundle
   R-Portable for true zero-install (lookup order already prefers it);
   whether to extend the template to the model screens (`glm()`
   Poisson/Gamma equivalents); whether `R/` gets committed (currently fully

@@ -5,123 +5,99 @@ Read this + `TODO.md` at the start of every session. See `PROJECT.md` for the sp
 
 ---
 
-## Last updated: 2026-08-31 (session 6 — V3 complete: per-kind slots, model persistence, pure-premium quote calculator; user manual)
+## Last updated: 2026-09-02 (session 7 — R prototype: architecture review vs. ChatGPT blueprint, CRAN snapshot pinning, renv decision closed)
 
 ## Headline
 
-**V3 is complete** — designed, approved, built and E2E-verified in ONE session,
-in three slices, each through the full Change Validation Workflow (BA agent →
-test plan in `.planning/e2e-tests/` → committed runner in `e2e/`). Six commits,
-all pushed to `origin/main`:
+Short R-prototype session (Python app untouched). Two outcomes:
 
-1. **5975c27** — interview `.docx` committed (Markus' decision; backlog item
-   closed).
-2. **54d595c — V3 design** in `docs/architecture.md` + `docs/ui_screens.md`
-   (Markus' decisions via single questions: model selection on 05/06 by
-   dataset kind, premium breakdown in the first cut, FULL model persistence).
-3. **583652a — slice 1:** per-kind model slots `model_frequency`/
-   `model_severity` (fitting no longer evicts the other kind); 05/06 select
-   by `spec.kind` (V2 mismatch guard retired); `observed_vs_predicted`
-   columns renamed kind-neutral (`observed_mean`/`predicted_mean` — the
-   carried V2 note, resolved). Plan+runner `per-kind-model-slots` TC1–TC12
-   green; 2 old runners updated for the retired behaviors.
-4. **d52fc9d — slice 2:** fitted-model persistence. `model_runs.model_path`
-   (idempotent ALTER TABLE migration; 31 old rows keep NULL),
-   `storage.save_model`/`load_model`, pickles
-   `models/run{id:04d}_{kind}_{family}.pickle` (gitignored), Load control in
-   the run histories of 04/07, Diagnostics hint for data-stripped loaded
-   models (summary() raises — guarded). KEY ENGINE FIND:
-   `save(remove_data=True)` strips IN PLACE → `save_model` deep-copies first
-   (unit-tested). Plan+runner `model-persistence` green; headline load 4.2s
-   vs ~12s refit.
-5. **c860279 — slice 3:** the quote calculator. Engine
-   `predict_pure_premium` + `premium_breakdown` (union missing-predictor
-   check over BOTH models' formulas; numeric baselines rebased at the
-   portfolio MEDIAN — BA gap G4); `pages/08_Pure_Premium.py` (guard ladder
-   incl. the G2 round-trip text, quote + breakdown + honest batch); Home
-   model-status + "ready to quote". BA gap G1 HONESTY CORRECTION baked into
-   docs+screen: no observed-cost comparison is possible (severity table
-   covers only ~73% of the 36,102 claims). Plan+runner `pure-premium`
-   TC1–TC10 green.
-6. **2378750 — `manuals/glm-workbench_user_manual.docx`:** 8-chapter German
-   walkthrough with VERIFIED reference values (generated via python-docx,
-   ephemeral `uv run --with`; generator script lives in the session
-   scratchpad only).
+1. **Blueprint review:** Markus stored a ChatGPT-derived architecture
+   blueprint for the LEGACY Swiss Life "Mortality Regression" rewrite at
+   `docs/arch_reasonimg_rshiny/architecture_r_shiny_reasoning_blueprint.md`
+   (UNTRACKED — his file, commit not requested). Assessment delivered in
+   chat: its target architecture ("A+ — Modular Shiny with clean domain
+   layer") matches glmworkbenchR almost 1:1 (modules orchestrate /
+   `fct_*` domain layer / `reactiveValues` state / bslib / no API);
+   glmworkbenchR is one maturity level AHEAD (package+golem from the
+   start, config layer, EUC/Electron deployment — all absent from the
+   blueprint). Flagged deltas: golem-first instead of "app.R now, package
+   later"; runtime installs are fine as a controlled installer-shell
+   preflight (vs. the blueprint's §10 ban, which targets install calls in
+   app logic); renv → see 2. Offered (unanswered): fold these deltas into
+   the blueprint doc as an addendum.
 
-Quality: 132 unit tests, 99.11% coverage; ruff + mypy clean; full regression
-battery green (all 9 UI/engine runners). Real-data anchors: median-policy
-premium **€97.22/yr** (= the breakdown's reference premium; freq 0.0670 ×
-amount €1,450), portfolio total expected loss **€79.8M**, average annual
-premium **€243**, expected claims 36,102 (exact), BonusMalus monotone,
-exposure scaling exact, loaded models quote identically.
+2. **CRAN snapshot pinning — the renv backlog point is CLOSED (Markus'
+   decisions).** His hard end-user contract: "R installed (target 4.6) +
+   CRAN access, NOTHING more, then run the exe." Package/golem is no
+   problem for that (exe installs the bundled source, pure R, no Rtools —
+   already E2E-proven). Instead of renv (restore of old versions often
+   needs source compilation → would break the no-Rtools contract), the
+   exe's auto-install now pins a **dated Posit Package Manager snapshot**:
+   `CRAN_SNAPSHOT = 'https://packagemanager.posit.co/cran/2026-09-01'` in
+   `desktop/main.js` (env override `GLM_WORKBENCH_CRAN` for
+   proxies/internal mirrors; bump the date only deliberately + re-test).
+   README: manual-install line uses the same URL; EUC section documents
+   the decision + rationale; old renv recommendation replaced (renv =
+   dev-machine-only option). TODO backlog entry resolved.
 
-Markus STARTED the manual walkthrough (ran the app, asked two good questions —
-frequency QQ-plot interpretation, 36,102-vs-26,444 claims gap — both answered
-in chat); the app was stopped at session end (taskkill of his
-`uv run streamlit run app.py` tree). Working tree clean.
+Verification chain (all green, 2026-09-02): snapshot serves 19,147 Windows
+binaries even for dev R 4.2.1 (target R 4.6 a fortiori); scratch-lib
+install through the exact installer steps (`INSTALL_OK praise 1.0.0`,
+binary zip from the snapshot); `node --check` OK; Electron dev smoke
+`SMOKE_OK`; **`npm run dist` rebuilt** portable (74.8 MB) + NSIS (75 MB);
+packaged portable exe smoke exit 0, no orphan Rscript; snapshot URL
+grep-confirmed inside the packaged `app.asar`.
 
-## What was done this session (details in TODO.md entries)
-
-- Session language switched to German (Markus' request — memory saved).
-- Context established: Markus will work at Swiss Life in reinsurance;
-  a reinsurance-treaty feature was discussed and DROPPED (motor data) —
-  the quote-calculator framing replaced it.
-- V3 slices 1–3 as in the headline; ~35 new unit tests overall
-  (109 → 132), 3 new E2E plans + 3 committed runners.
-- Existing runners: retired-behavior inversions (slice 1), plus repeated
-  Playwright timing hardenings — NEW LESSONS documented in `e2e/README.md`:
-  metric LABELS mount after the metric element (assert via
-  `stMetric.filter(has_text=…)`), widget counts need an expect on the LAST
-  widget (`nth(n-1)`) or an element below the group; text that also appears
-  in selectbox option labels ("AIC") does not wait.
-- `app.py` Home refreshed (sidebar order incl. Severity Model + Pure
-  Premium, roadmap markers, per-slot status).
-- Design-doc corrections during the slices (documented in place): G1 batch
-  metrics, G4 median baseline, G2 guard round trip, slice-2 Load-control
-  mechanism + summary-expander guard.
+**UNCOMMITTED at save (awaiting Markus' commit call):**
+`glmworkbench_in_r/desktop/main.js`, `glmworkbench_in_r/README.md`
+(+ the untracked blueprint doc under `docs/arch_reasonimg_rshiny/`).
+Suggested when he says commit: `feat(r-desktop): pin package installs to
+dated Posit CRAN snapshot` — and decide whether the blueprint doc gets
+committed too.
 
 ## Working agreements / lessons (keep honoring these)
 
 - Change Validation Workflow every slice on the MAIN app; decisions for
   Markus via AskUserQuestion ONE AT A TIME (his explicit preference).
 - Commits only when Markus says so; conventional commits, no Co-Authored-By.
+  Session-save commit covers `.planning/` only (precedent 8a34b17).
 - Respond in German; code/commits/docs stay English.
 - Never delete `data/workbench.db` OR the `models/` pickles; runners append
-  real runs + pickles by design (~57 runs in the DB after this session).
+  real runs + pickles by design (~57 runs in the DB).
 - statsmodels: `save(remove_data=True)` mutates in place (deep-copy first);
   data-stripped results predict and report coefficients/criteria but have no
   resid/fittedvalues and `summary()` raises.
-- Playwright/Streamlit lessons consolidated in `e2e/README.md` (mount-lag
-  expects; the slice-3 additions above).
-- Bash-tool heredocs can mangle non-ASCII — prefer Write/Edit; verify with
-  `od -c` when a heredoc was unavoidable (worked this session, still check).
-- python-docx via `uv run --with python-docx` for one-off docx generation —
-  no project dependency added.
+- Playwright/Streamlit lessons consolidated in `e2e/README.md`.
+- Bash-tool heredocs can mangle non-ASCII — prefer Write/Edit.
+- python-docx via `uv run --with python-docx` for one-off docx generation.
+- R side: exe smoke = `GLM_WORKBENCH_SMOKE_TEST=1`, criterion exit 0 + no
+  orphan Rscript; P3M snapshots serve Windows binaries even for older R.
 
 ## Open / next steps
 
-1. **Markus' manual walkthrough** along `manuals/glm-workbench_user_manual.docx`
-   (started; severity/persistence/quote chapters remaining) + the
-   deferred/manual E2E TCs (TODO list).
-2. **Manual addendum (his call, offered, unanswered):** Feature Engineering
-   on the severity dataset + the G6 rebuild-on-both-frames caveat.
-3. **V3.x aggregate-loss simulation** — design exists in
-   `docs/architecture.md` "Modeling"; prerequisites (predict_severity,
-   per-kind slots) are now ALL delivered; needs the Gamma dispersion surfaced
-   from the engine. Natural next milestone — confirm with Markus.
-4. Educational side quest: Negative Binomial vs Poisson AIC comparison
-   (overdispersion — prompted by his QQ-plot question).
-5. Backlog unchanged otherwise (regularisation rediscussion, synthetic
-   Chapter 27 generator, V2.x notes, R-package follow-ups on hold).
+1. **Commit call for the snapshot-pinning change** (see UNCOMMITTED above)
+   + Markus' decision whether the blueprint doc gets committed.
+2. **Blueprint addendum (offered, unanswered):** fold the glmworkbenchR
+   deltas (golem-first, installer-shell preflight vs. §10, snapshot-pinning
+   instead of renv, config layer, deployment chapter) into
+   `docs/arch_reasonimg_rshiny/architecture_r_shiny_reasoning_blueprint.md`.
+3. **Markus' manual walkthrough** along
+   `manuals/glm-workbench_user_manual.docx` (started session 6; severity /
+   persistence / quote chapters remaining) + deferred/manual E2E TCs.
+4. **Manual addendum (his call, still unanswered):** Feature Engineering on
+   the severity dataset + the G6 rebuild-on-both-frames caveat.
+5. **V3.x aggregate-loss simulation** — design in `docs/architecture.md`
+   "Modeling"; all prerequisites delivered; needs the Gamma dispersion
+   surfaced from the engine. Natural next Python milestone — confirm.
+6. Educational side quest: Negative Binomial vs Poisson AIC comparison.
+7. Backlog unchanged otherwise (regularisation rediscussion, synthetic
+   Chapter 27 generator, V2.x notes, remaining R follow-ups: custom icon,
+   bundle R-Portable, extend template to model screens).
 
 ## Architecture drift check (per CLAUDE.md save protocol)
 
-No drift: `docs/architecture.md` and `docs/ui_screens.md` were updated
-in-session as part of each slice (V3 section marked "approved and delivered
-2026-08-31", roadmap marks V3 complete, honesty/mechanism corrections
-documented in place with dates). The V2 carried note (frequency-flavoured
-calibration column names) was RESOLVED by slice 1. The R package
-(`glmworkbench_in_r/`) was untouched and intentionally stays outside
-`docs/architecture.md`. One documented-not-drifted corner: quantile bins
-built on two different frames give different edges (G6 note in the
-pure-premium E2E plan + TODO V3.x follow-ups).
+No drift: this session touched only `glmworkbench_in_r/` (deliberately
+outside `docs/architecture.md`) and its own README, which was updated
+in-session together with the code change. The new
+`docs/arch_reasonimg_rshiny/` blueprint is a reference document for the
+LEGACY-tool rewrite, not this repo's architecture — no sync needed.
