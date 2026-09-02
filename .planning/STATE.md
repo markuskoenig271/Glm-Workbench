@@ -48,12 +48,11 @@ binary zip from the snapshot); `node --check` OK; Electron dev smoke
 packaged portable exe smoke exit 0, no orphan Rscript; snapshot URL
 grep-confirmed inside the packaged `app.asar`.
 
-**UNCOMMITTED at save (awaiting Markus' commit call):**
-`glmworkbench_in_r/desktop/main.js`, `glmworkbench_in_r/README.md`
-(+ the untracked blueprint doc under `docs/arch_reasonimg_rshiny/`).
-Suggested when he says commit: `feat(r-desktop): pin package installs to
-dated Posit CRAN snapshot` — and decide whether the blueprint doc gets
-committed too.
+**COMMITTED 2026-09-02 (Markus' call, right after the save):**
+`e9fadbe feat(r-desktop): pin package installs to dated Posit CRAN
+snapshot` (main.js + README) and the blueprint doc under
+`docs/arch_reasonimg_rshiny/` (docs commit together with these planning
+touch-ups). Working tree clean.
 
 ## Working agreements / lessons (keep honoring these)
 
@@ -75,22 +74,20 @@ committed too.
 
 ## Open / next steps
 
-1. **Commit call for the snapshot-pinning change** (see UNCOMMITTED above)
-   + Markus' decision whether the blueprint doc gets committed.
-2. **Blueprint addendum (offered, unanswered):** fold the glmworkbenchR
+1. **Blueprint addendum (offered, unanswered):** fold the glmworkbenchR
    deltas (golem-first, installer-shell preflight vs. §10, snapshot-pinning
    instead of renv, config layer, deployment chapter) into
    `docs/arch_reasonimg_rshiny/architecture_r_shiny_reasoning_blueprint.md`.
-3. **Markus' manual walkthrough** along
+2. **Markus' manual walkthrough** along
    `manuals/glm-workbench_user_manual.docx` (started session 6; severity /
    persistence / quote chapters remaining) + deferred/manual E2E TCs.
-4. **Manual addendum (his call, still unanswered):** Feature Engineering on
+3. **Manual addendum (his call, still unanswered):** Feature Engineering on
    the severity dataset + the G6 rebuild-on-both-frames caveat.
-5. **V3.x aggregate-loss simulation** — design in `docs/architecture.md`
+4. **V3.x aggregate-loss simulation** — design in `docs/architecture.md`
    "Modeling"; all prerequisites delivered; needs the Gamma dispersion
    surfaced from the engine. Natural next Python milestone — confirm.
-6. Educational side quest: Negative Binomial vs Poisson AIC comparison.
-7. Backlog unchanged otherwise (regularisation rediscussion, synthetic
+5. Educational side quest: Negative Binomial vs Poisson AIC comparison.
+6. Backlog unchanged otherwise (regularisation rediscussion, synthetic
    Chapter 27 generator, V2.x notes, remaining R follow-ups: custom icon,
    bundle R-Portable, extend template to model screens).
 

@@ -396,8 +396,8 @@ Validation Workflow.
   dev laptop's R 4.2.1; installer-path scratch-lib install green; dev smoke
   SMOKE_OK; **distributables rebuilt** (`npm run dist`, portable 74.8 MB +
   NSIS 75 MB, 2026-09-02) with packaged-exe smoke exit 0, no orphan
-  Rscript, snapshot URL confirmed inside `app.asar`. Code UNCOMMITTED at
-  save (`desktop/main.js`, `README.md`) — awaiting Markus' commit call.
+  Rscript, snapshot URL confirmed inside `app.asar`. Committed 2026-09-02
+  as `e9fadbe feat(r-desktop): …` (Markus' call).
 - [ ] Feasibility follow-ups when Markus decides: custom app icon; bundle
   R-Portable for true zero-install (lookup order already prefers it);
   whether to extend the template to the model screens (`glm()`
